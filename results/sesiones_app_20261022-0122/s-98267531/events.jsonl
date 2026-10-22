@@ -1,0 +1,6 @@
+{"at": "2026-10-22T00:53:10+00:00", "type": "created", "n": 5}
+{"at": "2026-10-22T00:53:31+00:00", "type": "decision", "id": "V1", "decision": "aceptada", "previous": null, "reason": ""}
+{"at": "2026-10-22T00:55:43+00:00", "type": "decision", "id": "V2", "decision": "rechazada", "previous": null, "reason": ""}
+{"at": "2026-10-22T00:57:14+00:00", "type": "decision", "id": "V3", "decision": "rechazada", "previous": null, "reason": ""}
+{"at": "2026-10-22T00:57:49+00:00", "type": "decision", "id": "V4", "decision": "aceptada", "previous": null, "reason": ""}
+{"at": "2026-10-22T00:58:15+00:00", "type": "decision", "id": "V5", "decision": "aceptada", "previous": null, "reason": ""}

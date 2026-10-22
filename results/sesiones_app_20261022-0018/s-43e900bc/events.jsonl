@@ -1,0 +1,11 @@
+{"at": "2026-10-22T00:13:20+00:00", "type": "created", "n": 5}
+{"at": "2026-10-22T00:13:35+00:00", "type": "decision", "id": "V1", "decision": "aceptada", "previous": null, "reason": ""}
+{"at": "2026-10-22T00:13:35+00:00", "type": "decision", "id": "V2", "decision": "aceptada", "previous": null, "reason": ""}
+{"at": "2026-10-22T00:13:36+00:00", "type": "decision", "id": "V3", "decision": "aceptada", "previous": null, "reason": ""}
+{"at": "2026-10-22T00:13:38+00:00", "type": "decision", "id": "V4", "decision": "rechazada", "previous": null, "reason": ""}
+{"at": "2026-10-22T00:13:39+00:00", "type": "decision", "id": "V5", "decision": "rechazada", "previous": null, "reason": ""}
+{"at": "2026-10-22T00:15:50+00:00", "type": "decision", "id": "V1", "decision": "aceptada", "previous": "aceptada", "reason": "Mejora el aspecto de la persona y mantiene el color y  la forma de sus aspectos físicos."}
+{"at": "2026-10-22T00:15:50+00:00", "type": "decision", "id": "V2", "decision": "aceptada", "previous": "aceptada", "reason": "Mejora el aspecto de la persona, su cara tiene una mejora muy grande y mantiene el color , además,  la forma de sus aspectos físicos."}
+{"at": "2026-10-22T00:15:50+00:00", "type": "decision", "id": "V3", "decision": "aceptada", "previous": "aceptada", "reason": "Es como si estuviera pintado, pero se ve bien su aspecto y cambia mucho."}
+{"at": "2026-10-22T00:15:50+00:00", "type": "decision", "id": "V4", "decision": "rechazada", "previous": "rechazada", "reason": "Cambia de género, cosa que disgusta, no debería de cambiar de género, además la sonrisa se ve deformada igual que la corbata"}
+{"at": "2026-10-22T00:15:50+00:00", "type": "decision", "id": "V5", "decision": "rechazada", "previous": "rechazada", "reason": "Cambia de género, cosa que disgusta, no debería de cambiar de género, por lo demás se ve bien, pero el género lo malogra mucho."}

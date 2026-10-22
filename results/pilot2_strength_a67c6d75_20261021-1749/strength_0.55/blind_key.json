@@ -1,0 +1,42 @@
+{
+  "B01": {
+    "method": "A1",
+    "file": "images/A1/V1_s1001.png"
+  },
+  "B02": {
+    "method": "A2",
+    "file": "images/A2/V2_s1002.png"
+  },
+  "B03": {
+    "method": "A1",
+    "file": "images/A1/V3_s1003.png"
+  },
+  "B04": {
+    "method": "A1",
+    "file": "images/A1/V4_s1004.png"
+  },
+  "B05": {
+    "method": "A2",
+    "file": "images/A2/V4_s1004.png"
+  },
+  "B06": {
+    "method": "A1",
+    "file": "images/A1/V5_s1005.png"
+  },
+  "B07": {
+    "method": "A2",
+    "file": "images/A2/V3_s1003.png"
+  },
+  "B08": {
+    "method": "A2",
+    "file": "images/A2/V5_s1005.png"
+  },
+  "B09": {
+    "method": "A2",
+    "file": "images/A2/V1_s1001.png"
+  },
+  "B10": {
+    "method": "A1",
+    "file": "images/A1/V2_s1002.png"
+  }
+}

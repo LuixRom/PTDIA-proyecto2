@@ -1,0 +1,21 @@
+# Paquetes que deben venir PREINSTALADOS en Colab (fuente de verdad: config/pilot.yaml → dependencies).
+# Se validan en la celda 4 con los metadatos instalados, sin red. Nunca se instalan ni se actualizan.
+# Observado por el usuario en Colab: Python 3.13.15, torch 2.11.0+cu130, diffusers 0.41.0,
+# huggingface-hub 1.33.0, lpips ausente.
+torch>=2.4
+torchvision
+transformers>=4.45
+accelerate
+huggingface-hub              # debe cumplir lo que declaran diffusers/transformers instalados (p.ej. <2.0 para diffusers 0.41.0)
+diffusers>=0.40.0,<0.42
+safetensors
+numpy
+pillow
+scikit-image
+opencv-python
+scipy
+psutil
+pydantic>=2
+pyyaml
+packaging
+# opcional: lpips==0.1.4

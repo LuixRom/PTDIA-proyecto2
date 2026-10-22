@@ -1,0 +1,23 @@
+{
+  "summary": {
+    "aceptadas": [
+      "V1",
+      "V2",
+      "V3"
+    ],
+    "rechazadas": [
+      "V4",
+      "V5"
+    ],
+    "resumen": "Variaciones aceptadas: V1 (luz_calida), V2 (luz_fria_estudio), V3 (acuarela). Variaciones rechazadas: V4 (sonrisa), V5 (bn_epoca)."
+  },
+  "verified": true,
+  "errors": [
+    "V1: el resumen no indica explícitamente su estado.",
+    "V2: el resumen no indica explícitamente su estado.",
+    "V3: el resumen no indica explícitamente su estado."
+  ],
+  "attempts": 3,
+  "fallback": true,
+  "llm": "Qwen/Qwen2.5-1.5B-Instruct@989aa798"
+}

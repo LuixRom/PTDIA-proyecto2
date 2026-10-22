@@ -1,0 +1,23 @@
+{
+  "summary": {
+    "aceptadas": [
+      "V1",
+      "V4",
+      "V5"
+    ],
+    "rechazadas": [
+      "V2",
+      "V3"
+    ],
+    "resumen": "Variaciones aceptadas: V1 (luz_calida), V4 (sonrisa), V5 (bn_epoca). Variaciones rechazadas: V2 (luz_fria_estudio), V3 (acuarela)."
+  },
+  "verified": true,
+  "errors": [
+    "'aceptadas' = ['V4', 'V5'], registro = ['V1', 'V4', 'V5'].",
+    "'rechazadas' = ['V1', 'V2', 'V3'], registro = ['V2', 'V3'].",
+    "V1: el resumen dice 'rechazada' pero el registro dice 'aceptada'."
+  ],
+  "attempts": 3,
+  "fallback": true,
+  "llm": "Qwen/Qwen2.5-1.5B-Instruct@989aa798"
+}

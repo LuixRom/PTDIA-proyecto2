@@ -1,0 +1,3 @@
+# Sin conversión de saltos de línea: los manifiestos SHA-256, el código incluido en run_colab.ipynb y
+# los tests de integridad comparan bytes exactos. Con autocrlf en Windows dejarían de coincidir.
+* -text

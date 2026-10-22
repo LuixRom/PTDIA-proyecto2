@@ -1,0 +1,16 @@
+# Entorno y cachés locales
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Artefacto regenerable con `python tools/make_zip.py`
+dist/
+
+# Material del curso y enunciado: derechos del profesor/UTEC, no se publican
+Material/
+doc-principal/
+
+# Variaciones generadas a partir de fotos de personas reales tomadas de internet (terceros):
+# no se redistribuyen. Se conservan sus decisiones (JSON) para las métricas.
+results/sesiones_app_20261022-0122/**/*.png

@@ -1,0 +1,6 @@
+# El notebook NO instala nada: este archivo queda vacío a propósito.
+# Se usan los paquetes preinstalados de Colab, validados localmente (sin red) por p2/env_check.validate.
+#
+# Dependencia OPCIONAL, pendiente de aprobación aparte (no se instala desde el notebook):
+#   lpips==0.1.4  wheel oficial lpips-0.1.4-py3-none-any.whl, 53,763 bytes,
+#   sha256 fd537af5828b69d2e6ffc0a397bd506dbc28ca183543617690844c08e102ec5e (PyPI, consultado 2026-10-21)

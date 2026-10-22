@@ -1,0 +1,2 @@
+image_filename,sha256,model_used,style_preset,role,selection_reason,source,license
+SDXL_image_0035846.jpg,61a0608d14353920c5796483725cb53ce1d75e5b6f99ef4c79ad3530a29ff342,SDXL,no verificado (sin CSV),pilot,"1 cara, frontal, fotorrealista, sin oclusion","Kaggle selfishgene/sfhq-t2i-synthetic-faces-from-text-2-image-models v1, a_small_sample_new/SDXL_image_0035846.jpg; modelo según prefijo del nombre de archivo; registrada 2026-10-21",MIT según el campo de licencia de la ficha de Kaggle (consultado 2026-10-21); aviso en LICENSE_MIT.txt; no es una verificación legal

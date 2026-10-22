@@ -1,0 +1,92 @@
+# Configuración centralizada del piloto A1 vs A2 (ver planificacion/10 §3).
+# Todo lo que afecta a los resultados está aquí; el código no tiene valores mágicos.
+run_name: pilot_A1_vs_A2
+image_size: 512
+seed_base: 1000            # semilla de la variación k = seed_base + k  (k = 1..5)
+num_variations: 5          # requisito del enunciado: exactamente 5
+
+dataset:
+  dir: data/sfhq_t2i
+  manifest: data/sfhq_t2i/MANIFEST.csv
+  pilot_image: "SDXL_image_0035846.jpg"        # solo el nombre de archivo; lo fija tools/register_image.py --pilot
+  allowed_models: [SDXL]   # FLUX1_dev solo como alternativa aprobada aparte
+
+models:
+  sd15:
+    repo: stable-diffusion-v1-5/stable-diffusion-v1-5
+    revision: 451f4fe16113bff5a5d2269ed5ad43b0592e9a14
+    variant: fp16
+    license: CreativeML Open RAIL-M
+    expected_download_gb: 2.75
+  clip:
+    repo: openai/clip-vit-base-patch32
+    revision: 3d74acf9a28c67741b2f4f2ea7635f0aaf6f0268
+    license: "MIT (código); ficha: solo investigación, sin reconocimiento facial"
+    expected_download_gb: 0.61
+    use: offline_evaluation_only
+
+generation:
+  scheduler: euler
+  steps: 20
+  strength: 0.40
+  guidance_scale: 7.0
+  negative_prompt: "deformed, disfigured, extra eyes, blurry, lowres, watermark, text"
+  safety_checker: true
+  warmup: true
+  determinism_check: {method: A1, k: 1}
+
+methods:
+  A1:
+    description: "Línea base (Untitled1.ipynb celda 44): un prompt genérico, 5 semillas"
+    variations:
+      - {attribute: generico, prompt: "high quality, detailed, preserve the original subject and composition, natural colors"}
+      - {attribute: generico, prompt: "high quality, detailed, preserve the original subject and composition, natural colors"}
+      - {attribute: generico, prompt: "high quality, detailed, preserve the original subject and composition, natural colors"}
+      - {attribute: generico, prompt: "high quality, detailed, preserve the original subject and composition, natural colors"}
+      - {attribute: generico, prompt: "high quality, detailed, preserve the original subject and composition, natural colors"}
+  A2:
+    description: "Alternativa: un atributo distinto por variación, mismas semillas"
+    variations:
+      - {attribute: luz_calida, prompt: "portrait photo of the same person, warm golden hour lighting"}
+      - {attribute: luz_fria_estudio, prompt: "portrait photo of the same person, cool blue studio lighting"}
+      - {attribute: acuarela, prompt: "watercolor painting portrait of the same person"}
+      - {attribute: sonrisa, prompt: "portrait photo of the same person, smiling"}
+      - {attribute: bn_epoca, prompt: "black and white 1950s film portrait of the same person"}
+
+# Textos contra los que se mide CLIPΔ (los mismos para A1 y A2: A1 actúa como control).
+attribute_texts:
+  - "warm golden hour lighting portrait"
+  - "cool blue studio lighting portrait"
+  - "watercolor painting portrait"
+  - "smiling person portrait"
+  - "black and white vintage film portrait"
+
+resources:
+  t4:        {min_vram_gb: 12, min_ram_gb: 10, min_disk_gb: 10}
+  local_4gb: {min_vram_gb: 3.5, min_ram_gb: 8, min_disk_gb: 12}   # documentado, fuera del piloto
+
+# Versiones: se COMPRUEBAN localmente con los metadatos instalados (p2/env_check.validate);
+# el notebook no instala ni cambia ningún paquete. Rango vacío "" = cualquier versión instalada.
+dependencies:
+  required:
+    torch: ">=2.4"
+    torchvision: ""
+    transformers: ">=4.45"
+    accelerate: ""
+    huggingface-hub: ""
+    diffusers: ">=0.40.0,<0.42"   # 0.40.0 probado en Untitled1.ipynb; 0.41.0 (preinstalado en Colab) aceptado
+    safetensors: ""
+    numpy: ""
+    pillow: ""
+    scikit-image: ""
+    opencv-python: ""
+    scipy: ""
+    psutil: ""
+    pydantic: ">=2"
+    pyyaml: ""
+    packaging: ""
+  # Además se verifican las dependencias DECLARADAS por estos paquetes instalados
+  # (p.ej. diffusers 0.41.0 declara huggingface-hub>=1.32.0,<2.0).
+  verify_declared_requirements_of: [diffusers, transformers, accelerate]
+  optional:
+    lpips: "==0.1.4"   # si falta, la celda 7 se detiene salvo que ACEPTO_SIN_LPIPS = True

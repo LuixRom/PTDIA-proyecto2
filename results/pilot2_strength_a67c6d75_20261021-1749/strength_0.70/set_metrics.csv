@@ -1,0 +1,3 @@
+method,n,ssim_div,pairs,lpips_div,clip_div,lpips_available
+A1,5,0.3138439955408574,10,,0.22108243107795716,False
+A2,5,0.333202667402696,10,,0.34034404158592224,False

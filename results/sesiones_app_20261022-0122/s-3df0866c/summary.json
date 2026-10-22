@@ -1,0 +1,19 @@
+{
+  "summary": {
+    "aceptadas": [
+      "V2",
+      "V3",
+      "V5"
+    ],
+    "rechazadas": [
+      "V1",
+      "V4"
+    ],
+    "resumen": "La variación 'V2' fue aceptada por la luz fría estudiada, 'V3' fue aceptada por la acuarela y 'V5' fue aceptada por la época bética. La variación 'V1' fue rechazada por la luz calida y 'V4' fue rechazada por la sonrisa."
+  },
+  "verified": true,
+  "errors": [],
+  "attempts": 1,
+  "fallback": false,
+  "llm": "Qwen/Qwen2.5-1.5B-Instruct@989aa798"
+}

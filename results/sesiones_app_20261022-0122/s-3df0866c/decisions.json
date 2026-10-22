@@ -1,0 +1,107 @@
+{
+  "session_id": "s-3df0866c",
+  "input_sha256": "97501313f33fc20bb331fc331187c29a0662d6dd9c335c6c4649c78e97991de1",
+  "created_at": "2026-10-22T01:03:50+00:00",
+  "variations": [
+    {
+      "id": "V1",
+      "method": "A2",
+      "attribute": "luz_calida",
+      "prompt": "portrait photo of the same person, warm golden hour lighting",
+      "seed": 1001,
+      "params": {
+        "steps": 20,
+        "strength": 0.55,
+        "guidance_scale": 7.0,
+        "scheduler": "euler"
+      },
+      "image_file": "V1.png",
+      "metrics": {
+        "nsfw": false
+      },
+      "decision": "rechazada",
+      "reason": "",
+      "decided_at": "2026-10-22T01:06:32+00:00"
+    },
+    {
+      "id": "V2",
+      "method": "A2",
+      "attribute": "luz_fria_estudio",
+      "prompt": "portrait photo of the same person, cool blue studio lighting",
+      "seed": 1002,
+      "params": {
+        "steps": 20,
+        "strength": 0.55,
+        "guidance_scale": 7.0,
+        "scheduler": "euler"
+      },
+      "image_file": "V2.png",
+      "metrics": {
+        "nsfw": false
+      },
+      "decision": "aceptada",
+      "reason": "",
+      "decided_at": "2026-10-22T01:07:02+00:00"
+    },
+    {
+      "id": "V3",
+      "method": "A2",
+      "attribute": "acuarela",
+      "prompt": "watercolor painting portrait of the same person",
+      "seed": 1003,
+      "params": {
+        "steps": 20,
+        "strength": 0.55,
+        "guidance_scale": 7.0,
+        "scheduler": "euler"
+      },
+      "image_file": "V3.png",
+      "metrics": {
+        "nsfw": false
+      },
+      "decision": "aceptada",
+      "reason": "",
+      "decided_at": "2026-10-22T01:08:51+00:00"
+    },
+    {
+      "id": "V4",
+      "method": "A2",
+      "attribute": "sonrisa",
+      "prompt": "portrait photo of the same person, smiling",
+      "seed": 1004,
+      "params": {
+        "steps": 20,
+        "strength": 0.55,
+        "guidance_scale": 7.0,
+        "scheduler": "euler"
+      },
+      "image_file": "V4.png",
+      "metrics": {
+        "nsfw": false
+      },
+      "decision": "rechazada",
+      "reason": "",
+      "decided_at": "2026-10-22T01:09:19+00:00"
+    },
+    {
+      "id": "V5",
+      "method": "A2",
+      "attribute": "bn_epoca",
+      "prompt": "black and white 1950s film portrait of the same person",
+      "seed": 1005,
+      "params": {
+        "steps": 20,
+        "strength": 0.55,
+        "guidance_scale": 7.0,
+        "scheduler": "euler"
+      },
+      "image_file": "V5.png",
+      "metrics": {
+        "nsfw": false
+      },
+      "decision": "aceptada",
+      "reason": "",
+      "decided_at": "2026-10-22T01:09:39+00:00"
+    }
+  ]
+}
