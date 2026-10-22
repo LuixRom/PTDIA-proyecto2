@@ -107,6 +107,13 @@ Garantías del notebook:
    - pulsar «Generar resumen»: lo redacta el LLM y lo comprueba el verificador determinista. Si no coincide con las decisiones, se usa la plantilla y queda marcado.
 3. La celda 10 descarga `sesiones_app_….zip` con `decisions.json`, `events.jsonl` y `summary.json` de cada sesión. Esos datos sirven para medir la coherencia del resumen y para el informe.
 
+### Prueba con participantes (enlace público temporal + SUS + BD temporal)
+1. En la celda 1 marque `AUTORIZO_DESCARGAR_MODELOS`, `AUTORIZO_APP` y **`ENLACE_PUBLICO`**, y use **Ejecutar todas**.
+2. La celda 9 imprime `ENLACE PÚBLICO TEMPORAL: https://….gradio.live`. Compártalo: funciona mientras su Colab siga abierto (máx. 72 h) y cualquiera con el enlace puede usar la app.
+3. Cada participante escribe un **alias** (no su nombre), sube una cara propia o sintética (JPG o PNG), decide las 5 variaciones, pulsa «Generar resumen» y responde el **cuestionario SUS** (10 preguntas, al final de la app).
+4. Todo se guarda en `/content/sesiones/`: sesiones (`decisions.json`, `events.jsonl`, `summary.json`), `sus.jsonl` y la **BD temporal** `agente_tmp.sqlite`, con las tablas `resumenes` (respuestas del agente: texto, verificación, intentos, textos del LLM) y `sus`.
+5. Al terminar: **celda 10** (descarga un ZIP con todo) y después marque **`CONFIRMO_BORRAR_DATOS`** y ejecute **solo la celda 11**, que cierra el enlace y borra sesiones, imágenes y BD. Colab también borra `/content` al cerrar el entorno.
+
 ### Antes de subirlo: simulación completa en Windows
 `tools/simulate_colab.py` ejecuta las **celdas reales** del notebook con el `.venv` (mismas versiones que Colab: torch 2.11, diffusers 0.41.0, transformers 5.20.2, huggingface-hub 1.33.0).
 - Usa un sustituto de `google.colab` y modelos **diminutos** creados en local con las mismas clases (no descarga nada).

@@ -3,17 +3,24 @@
 Uso local con datos simulados:  python -m p2.ui --mock
 """
 import argparse
+import json
 import tempfile
 import uuid
 from pathlib import Path
 
 from . import config as cfgmod
+from . import sus
 from .decisions import DecisionStore
 from .explainer import explain, template_summary
 from .generate import cinco_variaciones, mock_generate, plan
 from .preprocess import prepare
-from .schemas import ExplainResult, Session, Summary, Variation
+from .schemas import ExplainResult, Session, Summary, Variation, now_iso
 from .verifier import verificar
+
+
+def clean_alias(alias):
+    """Alias anónimo del participante: texto libre del usuario (frontera de confianza) -> recortado y acotado."""
+    return " ".join((alias or "").split())[:40]
 
 
 def img_html(path, caption):
@@ -25,7 +32,7 @@ def img_html(path, caption):
             f'style="width:100%;border-radius:8px"/><figcaption style="text-align:center">{caption}</figcaption></figure>')
 
 
-def new_session(store, image_bytes, cfg, method, generate_one, out_dir, gen=None):
+def new_session(store, image_bytes, cfg, method, generate_one, out_dir, gen=None, participant=""):
     """gen: parámetros de generación realmente usados (p.ej. strength de la app); por defecto, los de la config."""
     img, sha = prepare(image_bytes, cfg["image_size"])
     sid = f"s-{uuid.uuid4().hex[:8]}"
@@ -40,7 +47,7 @@ def new_session(store, image_bytes, cfg, method, generate_one, out_dir, gen=None
         variations.append(Variation(id=spec["id"], method=method, attribute=spec["attribute"], prompt=spec["prompt"],
                                     seed=spec["seed"], image_file=p.name, metrics={"nsfw": nsfw},
                                     params={k: gen[k] for k in ("steps", "strength", "guidance_scale", "scheduler")}))
-    store.create(Session(session_id=sid, input_sha256=sha, variations=variations))
+    store.create(Session(session_id=sid, input_sha256=sha, participant=clean_alias(participant), variations=variations))
     return sid, paths
 
 
@@ -64,7 +71,7 @@ def on_submit(store, sid, decisions, reasons):
     return s
 
 
-def on_summarize(store, sid, llm=None, llm_name="plantilla"):
+def on_summarize(store, sid, llm=None, llm_name="plantilla", db=None):
     s = store.load(sid)
     if llm is None:  # sin LLM: plantilla determinista, marcada como tal
         data = template_summary(s)
@@ -74,19 +81,38 @@ def on_summarize(store, sid, llm=None, llm_name="plantilla"):
         res = explain(s, llm, verificar, llm_name=llm_name)
     out = store.root / sid / "summary.json"
     out.write_text(res.model_dump_json(indent=2), encoding="utf-8")
+    if db is not None:
+        db.add_summary(sid, s.participant, res)
     return res
 
 
-def build_ui(store, cfg, method="A2", generate_one=mock_generate, out_dir=None, llm=None, llm_name="plantilla", gen=None):
+def on_sus(store, sid, participant, answers, db=None):
+    """Guarda un cuestionario SUS (sus.jsonl en la carpeta de sesiones y, si hay, la BD temporal). Devuelve la puntuación."""
+    score = sus.score(answers)  # ValueError si falta alguna respuesta
+    rec = {"at": now_iso(), "participant": clean_alias(participant), "session_id": sid,
+           "answers": [int(a) for a in answers], "score": score}
+    store.root.mkdir(parents=True, exist_ok=True)
+    with open(store.root / "sus.jsonl", "a", encoding="utf-8") as f:
+        f.write(json.dumps(rec, ensure_ascii=False) + "\n")
+    if db is not None:
+        db.add_sus(rec["participant"], sid, rec["answers"], score)
+    return score
+
+
+def build_ui(store, cfg, method="A2", generate_one=mock_generate, out_dir=None, llm=None, llm_name="plantilla", gen=None,
+             db=None):
     import gradio as gr
     out_dir = out_dir or store.root
     with gr.Blocks(title="Proyecto 2 — 5 variaciones") as demo:
         sid = gr.State(None)
         gr.Markdown("## Sube una imagen, revisa 5 variaciones y acepta o rechaza cada una\n"
-                    "*Las variaciones son imágenes generadas por IA.* No subas fotos de terceros sin su consentimiento.")
+                    "*Las variaciones son imágenes generadas por IA.* No subas fotos de terceros sin su consentimiento. "
+                    "Las sesiones se guardan **temporalmente** para el estudio y se borran al terminar la prueba.")
         with gr.Row():
             inp = gr.Image(type="filepath", label="Imagen de entrada")
-            consent = gr.Checkbox(label="Confirmo que tengo derecho a usar esta imagen")
+            with gr.Column():
+                alias = gr.Textbox(label="Alias del participante (opcional; no uses tu nombre real)", max_lines=1)
+                consent = gr.Checkbox(label="Confirmo que tengo derecho a usar esta imagen")
         gen_btn = gr.Button("Generar 5 variaciones")
         imgs, radios, reasons = [], [], []
         with gr.Row():
@@ -99,13 +125,18 @@ def build_ui(store, cfg, method="A2", generate_one=mock_generate, out_dir=None, 
         sum_btn = gr.Button("Generar resumen")
         summary_md = gr.Markdown()
         decisions_view = gr.JSON(label="Decisiones registradas")
+        with gr.Accordion("Cuestionario de usabilidad (SUS): respóndalo al terminar de usar la app", open=False):
+            gr.Markdown("1 = totalmente en desacuerdo · 5 = totalmente de acuerdo")
+            sus_items = [gr.Radio([1, 2, 3, 4, 5], label=f"{i}. {q}") for i, q in enumerate(sus.ITEMS, start=1)]
+            sus_btn = gr.Button("Enviar cuestionario")
+            sus_md = gr.Markdown()
 
-        def _gen(path, ok):
+        def _gen(path, al, ok):
             if not ok:
                 raise gr.Error("Debes confirmar el consentimiento antes de continuar.")
             if not path:
                 raise gr.Error("Sube una imagen.")
-            s, paths = new_session(store, Path(path).read_bytes(), cfg, method, generate_one, out_dir, gen)
+            s, paths = new_session(store, Path(path).read_bytes(), cfg, method, generate_one, out_dir, gen, al)
             vs = {v.id: v for v in store.load(s).variations}
             # el filtro de seguridad de SD devuelve la imagen en negro: se avisa en vez de dejarla sin explicación
             nsfw = " · ⚠️ bloqueada por el filtro de seguridad (imagen en negro); puede rechazarla"
@@ -114,7 +145,7 @@ def build_ui(store, cfg, method="A2", generate_one=mock_generate, out_dir=None, 
             # nueva sesión: se limpian decisiones y motivos que la pantalla aún mostraba de la anterior
             return [s, *figs, *[gr.update(value=None)] * 5, *[""] * 5, "Decididas 0/5", "", None]
 
-        gen_btn.click(_gen, [inp, consent], [sid, *imgs, *radios, *reasons, status, summary_md, decisions_view])
+        gen_btn.click(_gen, [inp, alias, consent], [sid, *imgs, *radios, *reasons, status, summary_md, decisions_view])
 
         for k in range(1, 6):
             def _dec(s, d, _k=k):  # contador informativo; el registro definitivo lo hace on_submit
@@ -130,13 +161,22 @@ def build_ui(store, cfg, method="A2", generate_one=mock_generate, out_dir=None, 
                 on_submit(store, s, vals[:5], vals[5:])
             except ValueError as e:
                 raise gr.Error(str(e))
-            res = on_summarize(store, s, llm, llm_name)
+            res = on_summarize(store, s, llm, llm_name, db)
             badge = "✅ verificado" if res.verified else "⚠️ NO verificado: " + "; ".join(res.errors)
             origin = "plantilla determinista" if res.fallback else f"LLM {res.llm}"
             return (f"**Resumen** ({origin}, {badge})\n\n{res.summary.resumen}", store.load(s).model_dump(mode="json"),
                     "Decididas 5/5")
 
         sum_btn.click(_sum, [sid, *radios, *reasons], [summary_md, decisions_view, status])
+
+        def _sus(s, al, *answers):
+            try:
+                score = on_sus(store, s, al, answers, db)
+            except ValueError as e:
+                raise gr.Error(str(e))
+            return f"Gracias. Puntuación SUS de este cuestionario: **{score:.1f} / 100**."
+
+        sus_btn.click(_sus, [sid, alias, *sus_items], [sus_md])
     return demo
 
 
@@ -146,9 +186,10 @@ def main():
     a = ap.parse_args()
     if not a.mock:
         raise SystemExit("Solo el modo --mock está disponible localmente; la generación real se ejecuta en Colab.")
+    from .tempdb import TempDB
     store = DecisionStore(Path(tempfile.mkdtemp(prefix="p2_sessions_")))
     print("Sesiones en:", store.root)
-    build_ui(store, cfgmod.load()).launch()
+    build_ui(store, cfgmod.load(), db=TempDB(store.root / "agente_tmp.sqlite")).launch()
 
 
 if __name__ == "__main__":

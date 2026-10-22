@@ -31,6 +31,7 @@ class Session(BaseModel):
     session_id: str = Field(min_length=1)
     input_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     created_at: str = Field(default_factory=now_iso)
+    participant: str = Field(default="", max_length=40)  # alias anónimo (prueba con participantes)
     variations: list[Variation]
 
     @field_validator("variations")

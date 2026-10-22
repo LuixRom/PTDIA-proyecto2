@@ -44,6 +44,10 @@ AUTORIZO_EJECUTAR_PILOTO = False  #@param {type:"boolean"}
 ACEPTO_SIN_LPIPS = True  #@param {type:"boolean"}
 #@markdown App final (celda 9): usa SD 1.5 y descarga además el LLM Qwen2.5-1.5B (~3.1 GB). Requiere también AUTORIZO_DESCARGAR_MODELOS.
 AUTORIZO_APP = False  #@param {type:"boolean"}
+#@markdown Prueba con compañeros: crea un enlace público temporal *.gradio.live (dura mientras este Colab siga abierto, máx. 72 h). Cualquiera con el enlace puede usar la app.
+ENLACE_PUBLICO = False  #@param {type:"boolean"}
+#@markdown Al terminar la prueba (y tras descargar el ZIP de la celda 10): borra sesiones, imágenes y la BD temporal (celda 11).
+CONFIRMO_BORRAR_DATOS = False  #@param {type:"boolean"}
 EXPORTAR_A_DRIVE = False  #@param {type:"boolean"}
 #@markdown Origen del código: "incluido" (recomendado) o un ZIP subido/en Drive.
 FUENTE_CODIGO = "incluido"  #@param ["incluido", "subir", "drive"]
@@ -278,13 +282,22 @@ app_pipe = generate.load_sd15(cfg)
 generate_one = lambda im, spec: generate.sd15_generate(app_pipe, im, spec, APP_GEN)  # noqa: E731
 print("Cargando el LLM explicador:", cfg["llm"]["repo"], "(la primera vez descarga ~3.1 GB)")
 llm_fn, llm_name = p2llm.load_llm(cfg)
+from p2.tempdb import TempDB
+
 store = DecisionStore(Path("/content") / cfg["app"]["sessions_dir"])
+db = TempDB(store.root / "agente_tmp.sqlite")  # BD temporal: respuestas del agente + SUS (se borra en la celda 11)
 demo = ui.build_ui(store, cfg, method=cfg["app"]["method"], generate_one=generate_one, out_dir=store.root,
-                   llm=llm_fn, llm_name=llm_name, gen=APP_GEN)
+                   llm=llm_fn, llm_name=llm_name, gen=APP_GEN, db=db)
 print(f"App lista: método {cfg['app']['method']}, strength {APP_GEN['strength']}, LLM {llm_name}. "
-      f"Sesiones en {store.root}. Úsela aquí abajo (sin enlace público).")
+      f"Sesiones y BD temporal en {store.root}.")
 # allowed_paths: gradio solo sirve archivos de carpetas autorizadas; las sesiones están fuera de la carpeta de trabajo.
-demo.launch(share=False, inline=True, height=1100, quiet=True, show_error=True, allowed_paths=[str(store.root)])"""),
+demo.launch(share=ENLACE_PUBLICO, inline=not ENLACE_PUBLICO, height=1100, quiet=True, show_error=True,
+            allowed_paths=[str(store.root)])
+if ENLACE_PUBLICO:
+    print("ENLACE PÚBLICO TEMPORAL (compártalo con los participantes):", demo.share_url)
+    print("Funciona mientras este Colab siga abierto. Al terminar: celda 10 (descargar) y celda 11 (borrar).")
+else:
+    print("App dentro de esta celda, sin enlace público.")"""),
 
 (CODE, r"""#@title 10. Exportar las sesiones de la app (decisiones, resúmenes y verificación)
 requiere("cfg", "store")
@@ -306,12 +319,34 @@ else:
     if con:
         print(f"Resúmenes verificados: {sum(bool(f['verificado']) for f in con)}/{len(con)} | "
               f"con plantilla de respaldo: {sum(bool(f['fallback']) for f in con)}/{len(con)}")
+    if "db" in globals():
+        sus_rows = db.rows("sus")
+        print(f"BD temporal: {len(db.rows('resumenes'))} respuestas del agente | {len(sus_rows)} cuestionarios SUS"
+              + (f" | SUS medio {sum(r['puntuacion'] for r in sus_rows) / len(sus_rows):.1f}/100" if sus_rows else ""))
     export.write_manifest(store.root)
     zip_out = Path("/content") / f"sesiones_app_{datetime.now():%Y%m%d-%H%M}.zip"
     export.zip_dir(store.root, zip_out)
     print("ZIP:", zip_out)
     from google.colab import files
     files.download(str(zip_out))"""),
+
+(CODE, r"""#@title 11. Borrar los datos temporales de la prueba (sesiones, imágenes y BD)
+import shutil
+from pathlib import Path
+
+if "demo" in globals():
+    demo.close()  # cierra la app y el enlace público antes de borrar
+    print("App y enlace público cerrados.")
+root = Path("/content") / cfg["app"]["sessions_dir"] if "cfg" in globals() else Path("/content/sesiones")
+borrados = []
+if root.exists():
+    shutil.rmtree(root)
+    borrados.append(str(root))
+for z in Path("/content").glob("sesiones_app_*.zip"):
+    z.unlink()
+    borrados.append(str(z))
+print("Borrado:", borrados or "nada (no había datos)")
+print("Recuerde: el ZIP descargado en su PC NO se borra; trátelo como dato personal si contiene caras reales.")"""),
 
 (MD, r"""## Después del piloto (en Windows)
 1. Descomprima el ZIP de resultados en `results/`.
@@ -343,6 +378,9 @@ SKIP = {
                    "⏸ App no iniciada: falta autorización. Para usarla, marque AUTORIZO_DESCARGAR_MODELOS y AUTORIZO_APP "
                    "en la celda 1 y use «Entorno de ejecución › Ejecutar todas»."),
     "#@title 10.": ("APP_AUTORIZADA", "⏸ Exportación de sesiones omitida: la app no está autorizada (celda 1)."),
+    "#@title 11.": ("CONFIRMO_BORRAR_DATOS",
+                    "⏸ No se borró nada. Al terminar la prueba, descargue el ZIP (celda 10), marque CONFIRMO_BORRAR_DATOS "
+                    "en la celda 1 y ejecute solo esta celda."),
 }
 
 

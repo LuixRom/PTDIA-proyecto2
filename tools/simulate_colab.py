@@ -319,15 +319,20 @@ def main():
         relax_resources(n)
         import p2.ui as ui
 
-        def build_ui(store, cfg, method, generate_one, out_dir, llm, llm_name, gen):
+        def build_ui(store, cfg, method, generate_one, out_dir, llm, llm_name, gen, db=None):
             class Demo:
+                def close(self):  # como gradio.Blocks.close (lo usa la celda 11)
+                    app_run["closed"] = True
+
                 def launch(self, **kw):
                     img = Path(cfg["dataset"]["dir"]) / cfg["dataset"]["pilot_image"]
-                    sid, paths = ui.new_session(store, img.read_bytes(), cfg, method, generate_one, out_dir, gen)
+                    sid, paths = ui.new_session(store, img.read_bytes(), cfg, method, generate_one, out_dir, gen, "alias-1")
                     decs = ["aceptada", "rechazada", "aceptada", "rechazada", "rechazada"]
                     for k, d in enumerate(decs, start=1):
                         ui.on_decide(store, sid, f"V{k}", d, f"motivo {k}")
-                    app_run.update(sid=sid, launch=kw, res=ui.on_summarize(store, sid, llm, llm_name), store=store)
+                    res = ui.on_summarize(store, sid, llm, llm_name, db)
+                    score = ui.on_sus(store, sid, "alias-1", [4, 2, 4, 2, 4, 2, 4, 2, 4, 2], db)
+                    app_run.update(sid=sid, launch=kw, res=res, store=store, db=db, score=score)
             return Demo()
         ui.build_ui = build_ui
 
@@ -354,6 +359,13 @@ def main():
             "el LLM (Qwen2 diminuto) se llamó y el resultado quedó verificado": summ["verified"] is True
                 and "tiny-qwen" in summ["llm"] and summ["attempts"] >= 1,
             "celda 10: ZIP de sesiones descargado": bool(colab_e.downloads) and "sesiones_app_" in colab_e.downloads[-1],
+            "BD temporal: 1 respuesta del agente con alias y textos del LLM": [
+                (r["session_id"], r["participante"]) for r in app_run["db"].rows("resumenes")] == [(sid, "alias-1")]
+                and app_run["db"].rows("resumenes")[0]["respuestas_llm"].startswith("["),
+            "BD temporal: SUS guardado (puntuación 75)": app_run["score"] == 75.0
+                and [r["puntuacion"] for r in app_run["db"].rows("sus")] == [75.0],
+            "el ZIP incluye la BD temporal y sus.jsonl": {"agente_tmp.sqlite", "sus.jsonl"} <= set(
+                zipfile.ZipFile(colab_e.downloads[-1]).namelist()),
         }
         from p2.export import verify_manifest
         checks["manifiesto de sesiones íntegro"] = verify_manifest(store.root) == []
@@ -362,6 +374,17 @@ def main():
         print(f"  Resumen ({'plantilla de respaldo' if summ['fallback'] else 'LLM'}): {summ['summary']['resumen'][:160]}")
         okE = all(checks.values())
     results.append(okE)
+
+    # F) Borrado de datos temporales (celda 11): sin confirmar no borra nada; confirmado borra sesiones, BD y ZIP.
+    cell11 = [c for c in cells if c[0].startswith("11.")]
+    resF1 = run(cell11, nsE)
+    kept = (content / "sesiones").exists()
+    nsE["CONFIRMO_BORRAR_DATOS"] = True
+    resF2 = run(cell11, nsE)
+    gone = not (content / "sesiones").exists() and not list(content.glob("sesiones_app_*.zip"))
+    results.append(report("F (celda 11: borrado de datos temporales)", resF1 + resF2,
+                          lambda r: all(s == "ok" for _, s, _ in r) and "No se borró nada" in " ".join(r[0][2])
+                          and kept and gone))
 
     print("\nRESULTADO:", "TODO COMO SE ESPERABA" if all(results) else "HAY ESCENARIOS NO ESPERADOS")
     print("Carpeta de simulación (puede borrarse):", tmp)

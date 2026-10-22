@@ -127,7 +127,8 @@ def test_app_cells_gated_and_inline():
         g = lines.index("if not APP_AUTORIZADA:")
         assert lines[g + 1].startswith("    print(") and lines[g + 2] == "else:"
     app = next(v for k, v in cells.items() if k.startswith("#@title 9. "))
-    assert "share=False" in app and "inline=True" in app and "require_validation" in app
+    # por defecto (ENLACE_PUBLICO = False) la app va dentro de la celda, sin enlace público
+    assert "share=ENLACE_PUBLICO" in app and "inline=not ENLACE_PUBLICO" in app and "require_validation" in app
     # Regresión (Colab): sin allowed_paths gradio rechaza servir las imágenes de /content/sesiones (InvalidPathError).
     assert "allowed_paths=[str(store.root)]" in app and "show_error=True" in app
     assert 'cfg["app"]["strength"]' in app and "load_llm(cfg)" in app
@@ -137,3 +138,15 @@ def test_app_and_llm_config(cfg):
     assert cfg["app"] == {"method": "A2", "strength": 0.55, "sessions_dir": "sesiones"}
     assert cfg["llm"]["repo"] == "Qwen/Qwen2.5-1.5B-Instruct"
     assert re.fullmatch(r"[0-9a-f]{40}", cfg["llm"]["revision"]) and cfg["llm"]["license"] == "Apache-2.0"
+
+
+def test_public_link_db_and_delete_cells():
+    cells = {"".join(c["source"]).split("\n")[0]: "".join(c["source"]) for c in _cells()}
+    c1 = next(v for k, v in cells.items() if k.startswith("#@title 1. "))
+    assert re.search(r"^ENLACE_PUBLICO = False", c1, re.M) and re.search(r"^CONFIRMO_BORRAR_DATOS = False", c1, re.M)
+    app = next(v for k, v in cells.items() if k.startswith("#@title 9. "))
+    assert "share=ENLACE_PUBLICO" in app and "inline=not ENLACE_PUBLICO" in app and "TempDB(" in app and "db=db" in app
+    dele = next(v for k, v in cells.items() if k.startswith("#@title 11. "))
+    lines = dele.splitlines()
+    g = lines.index("if not CONFIRMO_BORRAR_DATOS:")
+    assert lines[g + 1].startswith("    print(") and "shutil.rmtree(root)" in dele and "demo.close()" in dele

@@ -73,7 +73,7 @@ def test_ui_serves_session_files_outside_temp_with_allowed_paths(cfg, tmp_path):
         img = tmp_path / "in.png"
         img.write_bytes(image_bytes())
         out = client_mod.Client(demo.local_url, verbose=False).predict(
-            client_mod.handle_file(str(img)), True, api_name="/_gen")
+            client_mod.handle_file(str(img)), "", True, api_name="/_gen")
         assert sum(isinstance(x, (str, dict)) for x in out) >= 5
         demo.close()
     finally:
@@ -105,12 +105,14 @@ def test_full_ui_flow_returns_inline_images_and_json(cfg, tmp_path):
         c = client_mod.Client(demo.local_url, verbose=False)
         img = tmp_path / "in.png"
         img.write_bytes(image_bytes())
-        out = c.predict(client_mod.handle_file(str(img)), True, api_name="/_gen")
+        out = c.predict(client_mod.handle_file(str(img)), "", True, api_name="/_gen")
         figs = [x for x in out if isinstance(x, str) and "data:image/png;base64," in x]
         assert len(figs) == 5 and "V3 · acuarela" in figs[2]
         decs_in = ["aceptada", "rechazada", "aceptada", "rechazada", "aceptada"]
         md, decs, status = c.predict(*decs_in, "", "motivo escrito tarde", "", "", "", api_name="/_sum")
         assert status == "Decididas 5/5" and decs["variations"][1]["reason"] == "motivo escrito tarde"
+        sus_md = c.predict("", *([4, 2] * 5), api_name="/_sus")  # cuestionario SUS desde la app real
+        assert "75.0 / 100" in sus_md and (store.root / "sus.jsonl").exists()
         assert "verificado" in md and [v["decision"] for v in decs["variations"]][:2] == ["aceptada", "rechazada"]
     finally:
         demo.close()
@@ -182,7 +184,7 @@ def test_nsfw_variation_is_labelled_in_ui(cfg, tmp_path):
     try:
         img = tmp_path / "in.png"
         img.write_bytes(image_bytes())
-        out = client_mod.Client(demo.local_url, verbose=False).predict(client_mod.handle_file(str(img)), True, api_name="/_gen")
+        out = client_mod.Client(demo.local_url, verbose=False).predict(client_mod.handle_file(str(img)), "", True, api_name="/_gen")
         figs = [x for x in out if isinstance(x, str) and "data:image/png;base64," in x]
         assert "filtro de seguridad" in figs[2] and all("filtro de seguridad" not in f for i, f in enumerate(figs) if i != 2)
     finally:

@@ -8,4 +8,4 @@ funciones, para que el resto (esquemas, decisiones, verificador, UI con mock) se
 pueda probar en Windows sin GPU ni modelos.
 """
 
-__version__ = "0.4.0"  # 0.4.0: app final (A2, strength 0.55) + LLM explicador Qwen2.5-1.5B
+__version__ = "0.5.0"  # 0.5.0: alias, SUS, BD temporal, enlace público opcional y borrado
