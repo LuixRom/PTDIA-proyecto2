@@ -1,0 +1,24 @@
+{"at": "2026-10-22T02:28:49+00:00", "type": "created", "n": 5}
+{"at": "2026-10-22T02:30:52+00:00", "type": "decision", "id": "V1", "decision": "aceptada", "previous": null, "reason": ""}
+{"at": "2026-10-22T02:30:52+00:00", "type": "decision", "id": "V2", "decision": "aceptada", "previous": null, "reason": ""}
+{"at": "2026-10-22T02:30:53+00:00", "type": "decision", "id": "V3", "decision": "aceptada", "previous": null, "reason": ""}
+{"at": "2026-10-22T02:30:55+00:00", "type": "decision", "id": "V4", "decision": "aceptada", "previous": null, "reason": ""}
+{"at": "2026-10-22T02:30:55+00:00", "type": "decision", "id": "V5", "decision": "aceptada", "previous": null, "reason": ""}
+{"at": "2026-10-22T02:32:48+00:00", "type": "decision", "id": "V4", "decision": "rechazada", "previous": "aceptada", "reason": ""}
+{"at": "2026-10-22T02:32:49+00:00", "type": "decision", "id": "V5", "decision": "rechazada", "previous": "aceptada", "reason": ""}
+{"at": "2026-10-22T02:33:44+00:00", "type": "decision", "id": "V1", "decision": "aceptada", "previous": "aceptada", "reason": "Mejora el rostro y se ve de forma correcta."}
+{"at": "2026-10-22T02:33:44+00:00", "type": "decision", "id": "V2", "decision": "aceptada", "previous": "aceptada", "reason": "La cara está mejorada y el peinado también se ve mejor."}
+{"at": "2026-10-22T02:33:44+00:00", "type": "decision", "id": "V3", "decision": "aceptada", "previous": "aceptada", "reason": "Con está forma de pintado se nota bien la forma que se le da."}
+{"at": "2026-10-22T02:33:44+00:00", "type": "decision", "id": "V4", "decision": "rechazada", "previous": "rechazada", "reason": "No me gusta que se le cambie el género, la sonrisa se ve rara y la ropa también."}
+{"at": "2026-10-22T02:33:44+00:00", "type": "decision", "id": "V5", "decision": "rechazada", "previous": "rechazada", "reason": "Lo que no me gusta es el cambio de género de nuevo."}
+{"at": "2026-10-22T02:43:45+00:00", "type": "decision", "id": "V1", "decision": "rechazada", "previous": "aceptada", "reason": "Mejora el rostro y se ve de forma correcta."}
+{"at": "2026-10-22T02:43:45+00:00", "type": "decision", "id": "V2", "decision": "rechazada", "previous": "aceptada", "reason": "La cara está mejorada y el peinado también se ve mejor."}
+{"at": "2026-10-22T02:43:47+00:00", "type": "decision", "id": "V1", "decision": "aceptada", "previous": "rechazada", "reason": "Mejora el rostro y se ve de forma correcta."}
+{"at": "2026-10-22T02:43:48+00:00", "type": "decision", "id": "V2", "decision": "aceptada", "previous": "rechazada", "reason": "La cara está mejorada y el peinado también se ve mejor."}
+{"at": "2026-10-22T02:43:50+00:00", "type": "decision", "id": "V4", "decision": "aceptada", "previous": "rechazada", "reason": "No me gusta que se le cambie el género, la sonrisa se ve rara y la ropa también."}
+{"at": "2026-10-22T02:43:51+00:00", "type": "decision", "id": "V5", "decision": "aceptada", "previous": "rechazada", "reason": "Lo que no me gusta es el cambio de género de nuevo."}
+{"at": "2026-10-22T02:48:04+00:00", "type": "decision", "id": "V1", "decision": "aceptada", "previous": "aceptada", "reason": "La iluminación resalta los rasgos del rostro y mejora su apariencia."}
+{"at": "2026-10-22T02:48:04+00:00", "type": "decision", "id": "V2", "decision": "aceptada", "previous": "aceptada", "reason": "El rostro se ve nítido, equilibrado y bien definido."}
+{"at": "2026-10-22T02:48:04+00:00", "type": "decision", "id": "V3", "decision": "aceptada", "previous": "aceptada", "reason": "El estilo artístico conserva la forma del rostro y logra un acabado atractivo."}
+{"at": "2026-10-22T02:48:04+00:00", "type": "decision", "id": "V4", "decision": "aceptada", "previous": "aceptada", "reason": "La expresión se ve natural y aporta una apariencia más amigable."}
+{"at": "2026-10-22T02:48:04+00:00", "type": "decision", "id": "V5", "decision": "aceptada", "previous": "aceptada", "reason": "El contraste resalta los detalles faciales y mantiene un resultado visual coherente."}

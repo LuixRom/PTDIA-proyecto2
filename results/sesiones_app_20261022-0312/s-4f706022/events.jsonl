@@ -1,0 +1,9 @@
+{"at": "2026-10-22T02:57:57+00:00", "type": "created", "n": 5}
+{"at": "2026-10-22T03:10:38+00:00", "type": "decision", "id": "V1", "decision": "aceptada", "previous": null, "reason": ""}
+{"at": "2026-10-22T03:10:40+00:00", "type": "decision", "id": "V2", "decision": "aceptada", "previous": null, "reason": ""}
+{"at": "2026-10-22T03:10:45+00:00", "type": "decision", "id": "V4", "decision": "aceptada", "previous": null, "reason": ""}
+{"at": "2026-10-22T03:11:30+00:00", "type": "decision", "id": "V1", "decision": "aceptada", "previous": "aceptada", "reason": "Conserva los rasgos principales y presenta una iluminación agradable y natural."}
+{"at": "2026-10-22T03:11:30+00:00", "type": "decision", "id": "V2", "decision": "aceptada", "previous": "aceptada", "reason": "Mantiene una apariencia realista, con el rostro bien definido."}
+{"at": "2026-10-22T03:11:30+00:00", "type": "decision", "id": "V3", "decision": "rechazada", "previous": null, "reason": "Suaviza demasiado los detalles y cambia ligeramente la apariencia del rostro."}
+{"at": "2026-10-22T03:11:30+00:00", "type": "decision", "id": "V4", "decision": "aceptada", "previous": "aceptada", "reason": "Conserva la sonrisa y los rasgos principales, aunque presenta algunas diferencias en los dientes."}
+{"at": "2026-10-22T03:11:30+00:00", "type": "decision", "id": "V5", "decision": "rechazada", "previous": null, "reason": "Modifica considerablemente el peinado y la apariencia facial, haciendo que parezca otra persona."}

@@ -1,0 +1,22 @@
+{
+  "summary": {
+    "aceptadas": [
+      "V1",
+      "V2",
+      "V3",
+      "V4",
+      "V5"
+    ],
+    "rechazadas": [],
+    "resumen": "Todos los usuarios aceptaron las variaciones V1, V2, V3, V4 y V5 debido a que todas ellas mantuvieron la calidad y el equilibrio de la imagen original."
+  },
+  "verified": true,
+  "errors": [],
+  "attempts": 2,
+  "fallback": false,
+  "llm": "Qwen/Qwen2.5-1.5B-Instruct@989aa798",
+  "raw_responses": [
+    "{\"aceptadas\": [\"V1\", \"V2\", \"V3\", \"V4\", \"V5\"], \"rechazadas\": [], \"resumen\": \"Todos los usuarios aceptaron las variaciones. Las razones son diversas pero generalmente relacionadas con la claridad, naturaleza o estética de los resultados.\"}",
+    "{\n    \"aceptadas\": [\"V1\", \"V2\", \"V3\", \"V4\", \"V5\"],\n    \"rechazadas\": [],\n    \"resumen\": \"Todos los usuarios aceptaron las variaciones V1, V2, V3, V4 y V5 debido a que todas ellas mantuvieron la calidad y el equilibrio de la imagen original.\"\n}"
+  ]
+}

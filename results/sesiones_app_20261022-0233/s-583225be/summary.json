@@ -1,0 +1,22 @@
+{
+  "summary": {
+    "aceptadas": [
+      "V1",
+      "V2",
+      "V3"
+    ],
+    "rechazadas": [
+      "V4",
+      "V5"
+    ],
+    "resumen": "Las variaciones V1, V2 y V3 fueron aceptadas por mejorar el rostro y la ropa. La variación V4 fue rechazada debido a cambios en el género y la ropa, mientras que V5 fue rechazada por cambiar el género nuevamente."
+  },
+  "verified": true,
+  "errors": [],
+  "attempts": 1,
+  "fallback": false,
+  "llm": "Qwen/Qwen2.5-1.5B-Instruct@989aa798",
+  "raw_responses": [
+    "{\"aceptadas\": [\"V1\", \"V2\", \"V3\"], \"rechazadas\": [\"V4\", \"V5\"], \"resumen\": \"Las variaciones V1, V2 y V3 fueron aceptadas por mejorar el rostro y la ropa. La variación V4 fue rechazada debido a cambios en el género y la ropa, mientras que V5 fue rechazada por cambiar el género nuevamente.\"}"
+  ]
+}

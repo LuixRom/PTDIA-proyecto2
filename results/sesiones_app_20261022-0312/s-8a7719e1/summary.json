@@ -1,0 +1,30 @@
+{
+  "summary": {
+    "aceptadas": [],
+    "rechazadas": [
+      "V1",
+      "V2",
+      "V3",
+      "V4",
+      "V5"
+    ],
+    "resumen": "Ninguna variación fue aceptada. Variaciones rechazadas: V1 (luz_calida), V2 (luz_fria_estudio), V3 (acuarela), V4 (sonrisa), V5 (bn_epoca)."
+  },
+  "verified": true,
+  "errors": [
+    "'aceptadas' = ['V1', 'V2', 'V3', 'V4'], registro = [].",
+    "'rechazadas' = ['V5'], registro = ['V1', 'V2', 'V3', 'V4', 'V5'].",
+    "V1: el resumen dice 'aceptada' pero el registro dice 'rechazada'.",
+    "V2: el resumen dice 'aceptada' pero el registro dice 'rechazada'.",
+    "V3: el resumen dice 'aceptada' pero el registro dice 'rechazada'.",
+    "V4: el resumen dice 'aceptada' pero el registro dice 'rechazada'."
+  ],
+  "attempts": 3,
+  "fallback": true,
+  "llm": "Qwen/Qwen2.5-1.5B-Instruct@989aa798",
+  "raw_responses": [
+    "{\"aceptadas\": [\"V4\", \"V5\"], \"rechazadas\": [\"V1\", \"V2\", \"V3\"], \"resumen\": \"V4 (sonrisa) fue aceptada porque la expresión es natural. V5 (bn_epoca) fue aceptada porque el contraste mantiene detalles importantes. V1 (luz_calida), V2 (luz_fria_estudio), y V3 (acuarela) fueron rechazadas por motivos específicos.\"}",
+    "{\n    \"aceptadas\": [\"V1\", \"V2\", \"V3\", \"V4\"],\n    \"rechazadas\": [\"V5\"],\n    \"resumen\": \"Las variaciones V1, V2, V3 y V4 fueron aceptadas por mantener la naturaleza facial y detalles faciales. La variación V5 fue rechazada debido a la pérdida de detalles faciales y reducción de claridad del rostro.\"\n}",
+    "{\n    \"aceptadas\": [\"V1\", \"V2\", \"V3\", \"V4\"],\n    \"rechazadas\": [\"V5\"],\n    \"resumen\": \"Las variaciones V1, V2, V3 y V4 fueron aceptadas por el usuario debido a que mantienen la naturaleza facial y eliminan elementos que podrían alterar la percepción del rostro. La variación V5 fue rechazada por el usuario, lo cual podría deberse a que el cambio en el atributo 'bn_epoca' puede ocultar detalles importantes del rostro.\"\n}"
+  ]
+}

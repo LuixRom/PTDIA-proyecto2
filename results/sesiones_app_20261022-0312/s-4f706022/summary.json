@@ -1,0 +1,22 @@
+{
+  "summary": {
+    "aceptadas": [
+      "V1",
+      "V2",
+      "V4"
+    ],
+    "rechazadas": [
+      "V3",
+      "V5"
+    ],
+    "resumen": "Las variaciones V1, V2 y V4 fueron aceptadas por conservar los rasgos principales y presentar una iluminación agradable y natural. La variación V3 fue rechazada debido a que suavizaba demasiados detalles y cambió ligeramente la apariencia del rostro. La variación V5 fue rechazada porque modificó considerablemente el peinado y la apariencia facial, haciéndola parecer otra persona."
+  },
+  "verified": true,
+  "errors": [],
+  "attempts": 1,
+  "fallback": false,
+  "llm": "Qwen/Qwen2.5-1.5B-Instruct@989aa798",
+  "raw_responses": [
+    "{\n    \"aceptadas\": [\"V1\", \"V2\", \"V4\"],\n    \"rechazadas\": [\"V3\", \"V5\"],\n    \"resumen\": \"Las variaciones V1, V2 y V4 fueron aceptadas por conservar los rasgos principales y presentar una iluminación agradable y natural. La variación V3 fue rechazada debido a que suavizaba demasiados detalles y cambió ligeramente la apariencia del rostro. La variación V5 fue rechazada porque modificó considerablemente el peinado y la apariencia facial, haciéndola parecer otra persona.\"\n}"
+  ]
+}

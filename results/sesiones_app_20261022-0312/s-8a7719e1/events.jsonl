@@ -1,0 +1,11 @@
+{"at": "2026-10-22T02:49:24+00:00", "type": "created", "n": 5}
+{"at": "2026-10-22T02:53:38+00:00", "type": "decision", "id": "V1", "decision": "rechazada", "previous": null, "reason": ""}
+{"at": "2026-10-22T02:53:38+00:00", "type": "decision", "id": "V2", "decision": "rechazada", "previous": null, "reason": ""}
+{"at": "2026-10-22T02:53:39+00:00", "type": "decision", "id": "V3", "decision": "rechazada", "previous": null, "reason": ""}
+{"at": "2026-10-22T02:53:41+00:00", "type": "decision", "id": "V4", "decision": "rechazada", "previous": null, "reason": ""}
+{"at": "2026-10-22T02:53:42+00:00", "type": "decision", "id": "V5", "decision": "rechazada", "previous": null, "reason": ""}
+{"at": "2026-10-22T02:54:55+00:00", "type": "decision", "id": "V1", "decision": "rechazada", "previous": "rechazada", "reason": "La iluminación altera demasiado el tono de piel y resta naturalidad al rostro."}
+{"at": "2026-10-22T02:54:55+00:00", "type": "decision", "id": "V2", "decision": "rechazada", "previous": "rechazada", "reason": "La iluminación hace que el rostro se vea artificial."}
+{"at": "2026-10-22T02:54:55+00:00", "type": "decision", "id": "V3", "decision": "rechazada", "previous": "rechazada", "reason": "El estilo pierde detalles faciales y reduce la claridad del rostro."}
+{"at": "2026-10-22T02:54:55+00:00", "type": "decision", "id": "V4", "decision": "rechazada", "previous": "rechazada", "reason": "La expresión se ve poco natural y modifica demasiado los rasgos originales."}
+{"at": "2026-10-22T02:54:55+00:00", "type": "decision", "id": "V5", "decision": "rechazada", "previous": "rechazada", "reason": "El contraste oculta detalles importantes del rostro."}
