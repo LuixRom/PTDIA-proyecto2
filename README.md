@@ -1,145 +1,116 @@
-# Proyecto 2 — Sistema generativo interactivo con feedback humano
+# Vitrina IA — Probador virtual de estilos
 
-Curso Planificación y Toma de Decisiones en IA (UTEC).
+Proyecto 2 de *Planificación y Toma de Decisiones en IA* (CS5363, UTEC): sistema generativo interactivo con feedback
+humano y explicación mediante agentes de IA.
 
-Dada una imagen de entrada, el sistema genera **exactamente 5 variaciones**. El usuario **acepta o rechaza** cada una, las decisiones se **registran** de forma estructurada, y un agente LLM las **resume**. Un **verificador determinista** independiente comprueba que el resumen coincide con el registro.
+El cliente de una tienda de moda en línea **sube su foto**, elige la línea (mujer u hombre) y una ocasión (trabajo,
+reunión, evento o casual), y recibe **exactamente 5 looks** sobre sí mismo. **Acepta o rechaza** cada uno (por imagen o
+por paquete), pide una **nueva ronda solo para los rechazados**, puede **restaurar** una ronda anterior del historial, y
+un **agente LLM resume** sus decisiones. Un **verificador determinista** comprueba que el resumen coincide con el registro.
 
-> Estado: **preparación del piloto**. El código está listo y probado localmente con datos simulados.
-> Todavía no se ha descargado ningún modelo ni imagen y no se ha ejecutado ninguna generación.
-> Planificación y licencias: `planificacion/` (en especial `10_verificaciones_y_plan_piloto.md`).
+## Dos maneras de generar
 
-## Para el equipo (flujo de trabajo)
+| | Intermedio (local) | Básico (API) |
+|---|---|---|
+| Cómo | Segmentación de la ropa + *inpainting* de SD 1.5 + ControlNet de pose; solo se regenera la ropa | API de imágenes de OpenAI (`gpt-image-2`); se devuelven el rostro y el cabello originales |
+| Costo | Gratis | De pago (≈ 0,023 USD por imagen, medido) |
+| Semilla fija | Sí (modo prueba) | No |
+| Foto | Se queda en tu equipo | Sale hacia OpenAI (casilla de consentimiento aparte) |
+| Tiempo (5 looks) | 2 a 5 min con 4 GB de VRAM | ≈ 2 min |
+
+El enfoque API solo aparece si hay una clave en `.env` (ver más abajo). Hay además un experimento de nivel avanzado
+(un LoRA propio) que **no se adoptó**; ver «Nivel avanzado».
+
+## Cómo ejecutarlo
+
+### En tu equipo (recomendado para la demo)
 ```powershell
-git clone <url-del-repo>; cd proyecto-2
-python -m pytest -m "not gpu" -q        # pruebas locales (sin GPU ni modelos)
+# una sola vez (en el .venv del proyecto)
+.venv\Scripts\python.exe -m pip install "gradio==6.15.2"
+.venv\Scripts\python.exe tools\download_models.py --llm      # modelos a la caché local (usa certificados de Windows)
+
+# cada vez
+.venv\Scripts\python.exe tools\app_local.py                  # abre http://127.0.0.1:7860
 ```
-- Si cambias código, configuración o datos, **regenera el notebook**, que lleva el código incluido: `python tools/build_notebook.py`. Después vuelve a ejecutar los tests y sube **también** `run_colab.ipynb`. El test `test_notebook_is_up_to_date` falla si se olvida.
-- Para probar en Colab basta con subir `run_colab.ipynb` (sección «Google Colab»).
-- Para probar el notebook entero en local sin descargar modelos: `.venv\Scripts\python.exe tools\simulate_colab.py`. Requiere un entorno con torch, diffusers y transformers.
-- No subas fotos de personas reales a `data/`: `tools/make_zip.py` y `tools/build_notebook.py` rechazan imágenes no registradas.
-- Resultados y análisis de los pilotos y de la app: carpeta `results/` (`piloto1_analisis.md`, `piloto2_analisis.md`, `app_sesiones_analisis.md`).
-- No incluidos en el repositorio: `Material/` y `doc-principal/` (material del curso).
+- Pensada para una GPU de 4 GB: Stable Diffusion con descarga a CPU y el LLM solo mientras redacta el resumen.
+- **Cierra Chrome y otros programas pesados** antes de arrancar: carga varios modelos y, con poca RAM libre, Windows
+  cierra el proceso sin mensaje (se ve el prompt de vuelta durante «Loading pipeline components»). Hacen falta unos 8 GB libres.
+- Las sesiones se guardan fuera del repositorio, en `C:\PTDIA\sesiones_local` (contienen fotos de personas: bórralas al terminar).
+
+### Enfoque API (opcional, de pago)
+1. Copia `.env.example` a `.env` y pon tu clave (`OPENAI_API_KEY=...`; también se acepta el nombre `API-KEY`). **El `.env` está en
+   `.gitignore`: nunca lo subas ni pegues la clave en un chat.**
+2. Pon un límite de gasto en tu cuenta de OpenAI y revoca la clave al terminar las pruebas.
+3. Al abrir la app debe imprimir «Enfoque API: disponible». En la pantalla elige «Básico · API de imágenes» y marca la casilla de consentimiento.
+4. Prueba suelta sin la app: `.venv\Scripts\python.exe tools\probar_api_gpt.py --confirmo` (envía la foto y cuesta dinero).
+
+### En Colab o Kaggle
+Sube `vitrina_colab.ipynb` (lleva el código incluido), activa una GPU y ejecuta las celdas en orden. Detecta Kaggle solo.
+No lleva la clave de la API, así que allí solo está el enfoque intermedio.
+
+### Sin GPU (modelos simulados)
+```powershell
+python -m p2.vitrina_ui --mock
+```
+
+## Nivel avanzado: LoRA «Estilo de la tienda» (experimento)
+Catálogo **sintético** generado con SD 1.5 (sin fotos de terceros) y un LoRA entrenado en Colab/Kaggle.
+```powershell
+.venv\Scripts\python.exe tools\gen_catalogo_lora.py --piloto   # genera imágenes en C:\PTDIA\lora_data (fuera del repo)
+python tools\curar_lora.py piloto                              # aplica la curación manual (config\lora_curado_piloto.yaml) y arma el zip
+# entrenar: subir el zip y abrir lora_entrenamiento_kaggle.ipynb en Kaggle o Colab (GPU T4)
+.venv\Scripts\python.exe tools\eval_local.py FOTOS SALIDA --lora RUTA\pytorch_lora_weights.safetensors   # comparar con y sin LoRA
+```
+Resultado: se deforma el calzado a partir de los 400 pasos, hay fuga de identidad y, aplicado al probador, no mejora
+el resultado; por eso la app no lo usa. El código y los resultados quedan como análisis (ver el informe).
 
 ## Estructura
 ```
-p2/            paquete: config, env_check, preprocess, generate, metrics, schemas,
-               decisions, verifier, explainer, ui, export
-experiments/   pilot.py (A1 vs A2), blind_eval.py (evaluación humana ciega)
-tools/         select_images.py, build_notebook.py, make_zip.py
-config/        pilot.yaml  ← modelos (con revisión fijada), parámetros, semillas, prompts
-requirements/  colab.txt (lo único instalable), colab-expected.txt, local-tests.txt
-data/sfhq_t2i/ imágenes de entrada (vacío hasta su aprobación) + licencia + manifiesto
-tests/         pruebas locales (sin GPU ni modelos)
-run_colab.ipynb  notebook del piloto (generado por tools/build_notebook.py)
+p2/                paquete
+  vitrina.py       motor: looks, máscaras, rondas, historial, métricas, exportación
+  tryon.py         segmentación, pose, inpainting, accesorios, limpieza de fondo
+  api_images.py    enfoque API (lee la clave de .env, sin imprimirla)
+  vitrina_ui.py    interfaz web (Gradio)        vitrina_theme.py  identidad visual (cinta métrica) + fuentes en assets/
+  guardrails.py    consentimiento, términos vetados, etiqueta     lora.py  carga/descarga de un LoRA sin peft
+  explainer.py, verifier.py, llm.py, decisions.py, schemas.py ...   (agente, verificador y registro)
+config/            vitrina.yaml (catálogo, ocasiones, modelos, guardrails), lora_*.yaml
+tools/             app_local.py, download_models.py, eval_local.py y otras herramientas de evaluación; generadores de notebooks
+tests/             pruebas automáticas
+informe/           informe LaTeX (latex/main.tex), guion del video y guion de la demo
+planificacion/     documentos de planificación y de la versión 0
+vitrina_colab.ipynb · lora_entrenamiento_kaggle.ipynb · run_colab.ipynb (piloto de la versión 0)
 ```
 
-## Windows: desarrollo y pruebas (sin GPU, sin descargas)
-Requisitos: Python ≥ 3.10 con `pydantic`, `pytest`, `pyyaml`, `pillow`, `numpy`. Opcionales: `scikit-image` y `opencv-python` (métricas y detección de caras), `gradio` (UI). En el equipo del autor ya estaban instalados (ver `requirements/local-tests.txt`).
-
+## Pruebas y notebooks
 ```powershell
-python -m pytest -m "not gpu" -q          # pruebas locales
-python -m p2.ui --mock                    # UI de aceptar/rechazar con generador simulado
-python tools/build_notebook.py            # regenerar run_colab.ipynb tras cambiar sus celdas
-python tools/make_zip.py                  # crear dist/proyecto2_colab.zip
+python -m pytest -q                      # pruebas locales (las de navegador usan Playwright y se omiten si falta)
+python tools\build_vitrina_notebook.py   # regenerar vitrina_colab.ipynb (lleva el código incluido)
+python tools\build_notebook.py           # regenerar run_colab.ipynb (versión 0)
+python tools\build_lora_notebook.py      # regenerar lora_entrenamiento_kaggle.ipynb
 ```
+Si cambias algo dentro de `p2/`, `tools/`, `config/` o `tests/`, **regenera los notebooks** y vuelve a correr las pruebas
+(los tests fallan si un notebook quedó desactualizado). Dos pruebas pueden fallar solo en equipos con otra versión de
+OpenCV o de torch fuera del `.venv`; no dependen del proyecto.
 
-Qué cubren las pruebas:
-- Esquemas (exactamente 5 variaciones, IDs válidos).
-- Registro de decisiones (aceptar, rechazar, cambio de opinión, escritura atómica, no sobrescritura).
-- Verificador del resumen (ID intercambiado, omitido o inventado; estado contrario; casos 0/5 y 5/5).
-- Explicador con LLM simulado (reintentos, respaldo por plantilla, motivo con instrucciones inyectadas).
-- Preprocesamiento (formatos, EXIF, tamaños).
-- Generador simulado.
-- Piloto completo con backend `mock` (registro, reanudación, métricas, conjunto ciego, manifiesto).
-- Comprobación de recursos y de compatibilidad de dependencias.
-- Selección de imágenes (con y sin CSV), registro de la imagen de entrada y rechazo de imágenes no registradas en el ZIP.
-- Invariantes del notebook, de la configuración y del ZIP generado.
+## Datos, privacidad y seguridad
+- **No se suben fotos de personas reales de terceros.** Las fotos de prueba y las sesiones viven fuera del repositorio.
+- La app no guarda tu foto: solo una copia reducida mientras dura la sesión, con un botón para borrarla.
+- Cada imagen lleva la etiqueta «Simulación IA».
+- La clave de la API vive solo en `.env` (ignorado por git); los mensajes de error enmascaran cualquier fragmento de clave.
+- `Material/` y `doc-principal/` (material del curso) no se publican.
 
-## Imagen de entrada (1 imagen sintética SDXL de SFHQ-T2I)
-En PowerShell, desde `C:\PTDIA\proyecto-2`:
-
-1. **Candidatas.** Solo lista nombres de archivo; no descarga imágenes:
-   ```powershell
-   python tools/select_images.py --kaggle-list --n 10
-   ```
-   Si tiene el CSV oficial, añada `--csv C:\PTDIA\sfhq_meta\SFHQ_T2I_dataset.csv` para filtrar además por estilo fotográfico. Guárdelo **fuera** de `data/`.
-2. **Elegir y descargar solo esa imagen.** Recorra las candidatas en orden y quédese con la primera que, a la vista, tenga 1 cara, sea fotorrealista, esté de frente o en 3/4 y no tenga oclusión fuerte. En [Kaggle](https://www.kaggle.com/datasets/selfishgene/sfhq-t2i-synthetic-faces-from-text-2-image-models) › Data › `a_small_sample_new/`, descargue ese archivo a `data\sfhq_t2i\` sin renombrarlo.
-3. **Registrarla.** La herramienta valida el nombre, JPEG 1024×1024, el modelo permitido, el manifiesto y, con `--csv`, el motor y el estilo. Después calcula el SHA-256, añade la fila a `MANIFEST.csv` y fija `dataset.pilot_image`:
-   ```powershell
-   python tools/register_image.py data\sfhq_t2i\SDXL_image_NNNNNNN.jpg --pilot --motivo "1 cara, frontal, fotorrealista, sin oclusión"
-   ```
-4. **Notebook y ZIP.** Se rechazan si en `data/sfhq_t2i/` hay algo sin registrar:
-   ```powershell
-   python tools/build_notebook.py
-   python -m pytest -m "not gpu" -q
-   python tools/make_zip.py
-   Get-FileHash dist\proyecto2_colab.zip -Algorithm SHA256
-   ```
-5. Suba `run_colab.ipynb` a Colab (sección siguiente): ya incluye la imagen y el código.
-
-Licencia: se registra la que declara la ficha de Kaggle (MIT; aviso en `LICENSE_MIT.txt`). **No es una verificación legal.** Detalle en `planificacion/10` §1. Sin CSV, el modelo se toma del prefijo del nombre y el estilo queda como «no verificado». Alternativa: SFHQ parte 3 (CC0).
-
-## Google Colab: piloto A1 vs A2
-**Solo hay que subir `run_colab.ipynb`**: el código y la imagen de entrada van incluidos en él (celda 1b, con SHA-256). No hay que subir ningún ZIP. `dist/proyecto2_colab.zip` queda como alternativa (`FUENTE_CODIGO = "subir"` o `"drive"`).
-
-1. https://colab.research.google.com → **Archivo › Subir cuaderno** → `run_colab.ipynb`.
-2. **Entorno de ejecución › Cambiar tipo de entorno de ejecución › GPU T4**.
-3. **Entorno de ejecución › Ejecutar todas.** Sin autorizaciones (por defecto):
-   - Las celdas 1–5 comprueban la GPU, la RAM y el disco, validan la compatibilidad de los paquetes (sin red y sin pip) y verifican la imagen de entrada.
-   - Las celdas 6–8 muestran «⏸ omitida» y la ejecución termina sin errores.
-4. Para ejecutar el piloto, marque en la celda 1 `AUTORIZO_DESCARGAR_MODELOS` y `AUTORIZO_EJECUTAR_PILOTO` y vuelva a **Ejecutar todas**.
-   - Se descargan SD 1.5 fp16 y CLIP con la revisión fijada (≈3.4 GB, estimado).
-   - Se hacen 12 generaciones: 1 de calentamiento, A1 ×5, A2 ×5 y 1 repetición de determinismo.
-   - Se calculan las métricas (sin LPIPS, que no está instalado en Colab: `ACEPTO_SIN_LPIPS = True`).
-   - Se descarga un ZIP de resultados.
-
-Garantías del notebook:
-- No instala ni cambia paquetes (PyTorch, torchvision, transformers y huggingface-hub nunca se tocan).
-- Cada celda comprueba que se ejecutaron las anteriores y, si no, lo explica en vez de dar un error críptico.
-- Las celdas 6 y 7 exigen la validación de la celda 4, para la misma configuración y sin cambios de paquetes.
-
-### App final (celdas 9 y 10)
-1. En la celda 1, marque `AUTORIZO_DESCARGAR_MODELOS` y `AUTORIZO_APP` (el piloto puede quedar desmarcado) y use **Ejecutar todas**.
-2. La celda 9 carga SD 1.5 y el LLM **Qwen2.5-1.5B-Instruct** (Apache-2.0; ≈3.1 GB la primera vez) y muestra la app **dentro de la celda**, sin enlace público:
-   - confirmar el consentimiento y subir una imagen (por ejemplo `data/sfhq_t2i/SDXL_image_0035846.jpg`);
-   - generar 5 variaciones (A2: luz cálida, luz fría, acuarela, sonrisa, B/N; strength 0.55, elegido en los pilotos);
-   - aceptar o rechazar cada una, con un motivo opcional;
-   - pulsar «Generar resumen»: lo redacta el LLM y lo comprueba el verificador determinista. Si no coincide con las decisiones, se usa la plantilla y queda marcado.
-3. La celda 10 descarga `sesiones_app_….zip` con `decisions.json`, `events.jsonl` y `summary.json` de cada sesión. Esos datos sirven para medir la coherencia del resumen y para el informe.
-
-### Prueba con participantes (enlace público temporal + SUS + BD temporal)
-1. En la celda 1 marque `AUTORIZO_DESCARGAR_MODELOS`, `AUTORIZO_APP` y **`ENLACE_PUBLICO`**, y use **Ejecutar todas**.
-2. La celda 9 imprime `ENLACE PÚBLICO TEMPORAL: https://….gradio.live`. Compártalo: funciona mientras su Colab siga abierto (máx. 72 h) y cualquiera con el enlace puede usar la app.
-3. Cada participante escribe un **alias** (no su nombre), sube una cara propia o sintética (JPG o PNG), decide las 5 variaciones, pulsa «Generar resumen» y responde el **cuestionario SUS** (10 preguntas, al final de la app).
-4. Todo se guarda en `/content/sesiones/`: sesiones (`decisions.json`, `events.jsonl`, `summary.json`), `sus.jsonl` y la **BD temporal** `agente_tmp.sqlite`, con las tablas `resumenes` (respuestas del agente: texto, verificación, intentos, textos del LLM) y `sus`.
-5. Al terminar: **celda 10** (descarga un ZIP con todo) y después marque **`CONFIRMO_BORRAR_DATOS`** y ejecute **solo la celda 11**, que cierra el enlace y borra sesiones, imágenes y BD. Colab también borra `/content` al cerrar el entorno.
-
-### Antes de subirlo: simulación completa en Windows
-`tools/simulate_colab.py` ejecuta las **celdas reales** del notebook con el `.venv` (mismas versiones que Colab: torch 2.11, diffusers 0.41.0, transformers 5.20.2, huggingface-hub 1.33.0).
-- Usa un sustituto de `google.colab` y modelos **diminutos** creados en local con las mismas clases (no descarga nada).
-- Comprueba cuatro escenarios: por defecto, piloto completo, celdas fuera de orden y ZIP subido.
-
+## Informe y guiones
+El informe es `informe/latex/main.tex` (PDF compilado: `informe/informe.pdf`, 9 páginas; el límite es 10). Se compila con
+pdfLaTeX (MiKTeX, Prism u Overleaf) **dos veces**, desde `informe/latex`, junto con la carpeta `figs/`:
 ```powershell
-python tools/build_notebook.py
-.venv\Scripts\python.exe tools\simulate_colab.py      # debe terminar con "TODO COMO SE ESPERABA"
-python -m pytest -m "not gpu" -q
-python tools/make_zip.py
+cd informe\latex
+pdflatex -interaction=nonstopmode main.tex   # repetir una vez más para resolver las referencias
 ```
+Las figuras se regeneran con `python informe/latex/make_figs.py`. Guiones en `informe/guion_video.md` (3 min) e
+`informe/guion_demo.md` (6 min).
 
-## Métricas e interpretación
-- **SSIM**: solo referencia. En `Untitled1.ipynb` premió artefactos como si fueran "diversidad".
-- **LPIPS**: distancia perceptual.
-- **Similitud CLIP**: semántica, **no identidad**.
-- **CLIPΔ**: si se aplicó el atributo pedido.
-- **Diversidad**: media de los 10 pares.
-- **Fallos**: caras detectadas (OpenCV Haar), NSFW, imagen negra.
-- **Identidad y calidad**: se juzgan en la **evaluación humana ciega** (`experiments/blind_eval.py`).
-- Con 1 imagen de entrada los resultados son **exploratorios**: no son evidencia estadística generalizable.
-
-## Ética y licencias (resumen)
-- SD 1.5: CreativeML Open RAIL-M. Prohibido usarlo para discriminar, dañar menores, difundir datos personales o desinformación.
-- El safety checker permanece activo.
-- CLIP se usa solo en la evaluación offline y nunca para identificar personas.
-- Las imágenes de entrada son sintéticas. Las variaciones se etiquetan como generadas por IA.
-- La UI exige consentimiento antes de subir una imagen.
-- Sin APIs de pago ni credenciales en el código.
+## Licencias y créditos
+Stable Diffusion 1.5 (CreativeML OpenRAIL-M), ControlNet OpenPose (OpenRAIL), SegFormer B2 de ropa (licencia por verificar
+en su ficha), ViTPose (Apache-2.0), CLIP (MIT en el código), Qwen2.5 (Apache-2.0), Phi-3.5-mini (MIT). Tipografías Big
+Shoulders Display y Hanken Grotesk (SIL OFL 1.1) incluidas en `p2/assets/fonts`. Las licencias son las declaradas en las
+fichas de cada modelo y no son una verificación legal.

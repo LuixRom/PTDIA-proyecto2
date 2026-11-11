@@ -15,9 +15,15 @@ def chat_ids(tok, prompt, device):
 
 def load_llm(cfg, device="cuda"):
     """Devuelve (función str->str, nombre con revisión). Descarga los pesos la primera vez (~3.1 GB)."""
+    generate, name, _ = load_llm_entry(cfg["llm"], device)
+    return generate, name
+
+
+def load_llm_entry(c, device="cuda"):
+    """Carga un LLM de una entrada de config ({repo, revision, max_new_tokens}).
+    Devuelve (función str->str, nombre con revisión, modelo) — el modelo, para poder liberarlo de la GPU."""
     import torch
     from transformers import AutoModelForCausalLM, AutoTokenizer
-    c = cfg["llm"]
     tok = AutoTokenizer.from_pretrained(c["repo"], revision=c["revision"])
     model = AutoModelForCausalLM.from_pretrained(c["repo"], revision=c["revision"], dtype=torch.float16).to(device).eval()
 
@@ -28,4 +34,6 @@ def load_llm(cfg, device="cuda"):
                                  pad_token_id=tok.pad_token_id if tok.pad_token_id is not None else tok.eos_token_id)
         return tok.decode(out[0, enc["input_ids"].shape[1]:], skip_special_tokens=True)
 
-    return generate, f"{c['repo']}@{c['revision'][:8]}"
+    # revision "main" no identifica pesos: se registra el commit realmente descargado
+    rev = getattr(model.config, "_commit_hash", None) or c["revision"]
+    return generate, f"{c['repo']}@{str(rev)[:8]}", model

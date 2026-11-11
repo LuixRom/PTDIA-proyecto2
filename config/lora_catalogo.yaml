@@ -1,0 +1,75 @@
+# Catálogo sintético para el LoRA «Estilo de la tienda» (nivel avanzado). Un LoRA por línea (mujer / hombre).
+# Las imágenes de entrenamiento las genera tools/gen_catalogo_lora.py con Stable Diffusion 1.5 (modelo abierto,
+# CreativeML OpenRAIL-M): no hay fotos de terceros ni datos personales. Se guardan FUERA del repositorio.
+# Cada prenda lleva una palabra clave (vtr_<id>) que el LoRA aprende a asociar con ese aspecto.
+
+salida: C:/PTDIA/lora_data
+imagenes_por_prenda: 12
+base: stable-diffusion-v1-5/stable-diffusion-v1-5
+steps: 25
+guidance: 7.5
+size: [512, 704]            # alto > ancho: cuerpo entero; múltiplos de 8
+negative: "two people, multiple people, collage, split image, grid, back view, three shoes, extra shoes, lying down, sitting, upside down, top-down view, feet in the air, text, watermark, logo, brand name, cartoon, drawing, deformed, extra fingers, extra limbs, bad anatomy, blurry, lowres, cropped, nsfw, nude"
+
+# tipo: ropa (cuerpo entero) | calzado (piernas y pies) | accesorio_cara (retrato)
+plantillas:
+  ropa: "full body fashion catalog photo of a {genero} model standing, front view, wearing {prompt}, facing the camera, one single person, plain light grey studio background, soft studio lighting, sharp focus, high quality"
+  calzado: "fashion catalog photo of a {genero} model's legs and feet standing upright with both feet flat on a plain light grey studio floor, facing the camera, exactly two shoes, wearing {prompt}, soft studio lighting, sharp focus, high quality"
+  producto: "studio product photo of {prompt}, a pair of shoes, isolated on a plain white background, soft studio lighting, sharp focus, high quality"
+  accesorio_cara: "catalog portrait of a {genero} model looking at the camera, wearing {prompt}, plain light grey studio background, soft studio lighting, sharp focus, high quality"
+# Variedad de encuadre, fondo e iluminación (por tipo): con textos casi iguales el LoRA memoriza la plantilla.
+# Sin poses extremas: en el calzado producían figuras acostadas o con tres zapatos.
+variaciones:
+  ropa: ["front view", "slightly turned three-quarter view", "relaxed pose, arms at the sides", "calm natural pose",
+         "soft diffused lighting", "bright even lighting", "plain white background", "light beige wall background",
+         "light grey seamless paper background", "high key studio lighting", "warm soft window light", "hands in pockets"]
+  calzado: ["front view", "slightly turned three-quarter view", "soft diffused lighting", "bright even lighting",
+            "plain white background", "light beige wall background", "light grey seamless paper background",
+            "high key studio lighting", "warm soft window light", "feet together", "feet slightly apart", "natural stance"]
+  producto: ["side view", "three-quarter front view", "pair standing side by side", "slightly angled view", "soft diffused lighting", "bright even lighting"]
+  accesorio_cara: ["front view", "slightly turned three-quarter view", "soft diffused lighting", "bright even lighting",
+                   "plain white background", "light beige wall background", "slight smile", "calm expression"]
+
+# Piloto: 4 prendas de mujer, 24 imágenes cada una (--piloto). Sirve para comprobar que el LoRA carga en el
+# inpainting y si mejora algo antes de generar el catálogo completo.
+piloto:
+  linea: mujer
+  imagenes_por_prenda: 24
+  prendas: [m_tacones_negros, m_zapatillas_blancas, m_camisa_celeste, m_blusa_blanca]
+
+mujer:
+  genero: woman
+  prendas:
+    m_blusa_blanca:    {tipo: ropa, prompt: "a crisp white button-up blouse with black trousers"}
+    m_camisa_celeste:  {tipo: ropa, prompt: "a pale sky-blue button-up shirt with black trousers"}
+    m_traje_beige:     {tipo: ropa, prompt: "a light sand-beige cream tailored pantsuit"}
+    m_vestido_rojo:    {tipo: ropa, prompt: "an elegant sleeveless red satin evening dress"}
+    m_vestido_floral:  {tipo: ropa, prompt: "a modest floral summer dress with short sleeves"}
+    m_sueter_gris:     {tipo: ropa, prompt: "a plain solid grey crew-neck sweater and blue jeans"}
+    m_blazer_azul:     {tipo: ropa, prompt: "a solid navy blue blazer over a plain white top with grey trousers"}
+    m_jean_azul:       {tipo: ropa, prompt: "a plain white t-shirt and classic blue straight-leg jeans"}
+    m_tacones_negros:  {tipo: calzado, producto_n: 12, prompt: "plain all-black leather high heel pumps"}
+    m_zapatillas_blancas: {tipo: calzado, producto_n: 12, prompt: "plain all-white leather sneakers"}
+    m_botas_negras:    {tipo: calzado, prompt: "plain black leather ankle boots"}
+    m_zapatos_planos:  {tipo: calzado, prompt: "plain beige leather ballet flat shoes"}
+    m_lentes_negros:   {tipo: accesorio_cara, prompt: "thin black rectangular eyeglasses with clear lenses"}
+    m_lentes_carey:    {tipo: accesorio_cara, prompt: "thick brown tortoiseshell round eyeglasses with clear lenses"}
+    m_collar_perlas:   {tipo: accesorio_cara, prompt: "a classic short white pearl necklace"}
+
+hombre:
+  genero: man
+  prendas:
+    h_terno_azul:      {tipo: ropa, prompt: "a navy blue suit with a white dress shirt and tie"}
+    h_terno_gris:      {tipo: ropa, prompt: "a charcoal grey suit with a white shirt"}
+    h_camisa_celeste:  {tipo: ropa, prompt: "a light blue dress shirt and grey dress trousers"}
+    h_camisa_blanca:   {tipo: ropa, prompt: "a classic white dress shirt and beige chino trousers"}
+    h_blazer_gris:     {tipo: ropa, prompt: "a solid grey blazer over a white shirt with grey trousers"}
+    h_sueter_azul:     {tipo: ropa, prompt: "a solid navy crew-neck sweater and grey trousers"}
+    h_casaca_cuero:    {tipo: ropa, prompt: "a solid brown leather jacket and dark blue jeans"}
+    h_hoodie_gris:     {tipo: ropa, prompt: "a plain grey hoodie and dark blue jeans"}
+    h_zapatos_negros:  {tipo: calzado, prompt: "men's plain all-black leather oxford dress shoes"}
+    h_mocasines:       {tipo: calzado, prompt: "men's brown leather loafers"}
+    h_zapatillas_blancas: {tipo: calzado, prompt: "men's plain all-white leather sneakers"}
+    h_botas_marrones:  {tipo: calzado, prompt: "men's brown leather lace-up boots"}
+    h_lentes_negros:   {tipo: accesorio_cara, prompt: "thin black rectangular eyeglasses with clear lenses"}
+    h_lentes_metal:    {tipo: accesorio_cara, prompt: "thin silver metal round eyeglasses with clear lenses"}

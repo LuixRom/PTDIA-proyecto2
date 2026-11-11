@@ -1,0 +1,249 @@
+# Vitrina IA — probador virtual de estilos (config. de la app final). Todo lo que cambia resultados está aquí.
+run_name: vitrina_v1
+image_size: 512
+num_variations: 5            # requisito del enunciado: exactamente 5
+
+seeds:
+  base: 1000                 # modo prueba: semilla = base + 100*(ronda-1) + k  (reproducible)
+  default_mode: produccion   # produccion: semillas aleatorias por ronda (se registran en history.jsonl)
+
+models:
+  sd15:                      # enfoque A (básico): img2img de toda la foto
+    repo: stable-diffusion-v1-5/stable-diffusion-v1-5
+    revision: 451f4fe16113bff5a5d2269ed5ad43b0592e9a14
+    variant: fp16
+    license: CreativeML Open RAIL-M
+  sd15_inpaint:              # enfoque B (intermedio): inpainting solo de la ropa
+    repo: stable-diffusion-v1-5/stable-diffusion-inpainting
+    revision: main           # se registra el commit real en history.jsonl; fijarlo tras la primera ejecución
+    variant: fp16
+    license: CreativeML Open RAIL-M
+  segmenter:                 # máscara de ropa, rostro y cabello (SegFormer-B2 entrenado en ATR)
+    repo: mattmdjaga/segformer_b2_clothes
+    revision: main
+    license: "por verificar en la ficha del modelo"
+  pose:                      # esqueleto del cuerpo (ViTPose): ControlNet openpose y ubicación de las manos
+    repo: usyd-community/vitpose-base-simple
+    revision: main
+    license: Apache-2.0
+    min_score: 0.3
+  clip:                      # solo métricas (ΔCLIP y diversidad); nunca para identificar personas
+    repo: openai/clip-vit-base-patch32
+    revision: 3d74acf9a28c67741b2f4f2ea7635f0aaf6f0268
+    license: "MIT (código); ficha: solo investigación"
+
+approaches:
+  A:
+    name: "A · Rápido (img2img + recomposición)"
+    description: "SD 1.5 estándar regenera la foto y se conserva el original fuera de la ropa. Más rápido; la prenda puede encajar peor en los bordes."
+    prompt: "photo of a person wearing {items}, realistic photo, detailed fabric, high quality"
+    strength: 0.75           # 0.55 (versión 0) casi no cambiaba la prenda en Colab; más alto cambia la cara, por eso se recompone
+    steps: 20
+    composite: true          # fuera de la máscara de ropa se pega el original: rostro, cabello y fondo intactos
+  API:                       # nivel básico por API (de pago): solo aparece en la app si hay clave en el .env
+    name: "Básico · API de imágenes (OpenAI)"
+    description: "Envía tu foto a la API de OpenAI (de pago) y regenera la imagen con el look; tu rostro y tu cabello se conservan idénticos a tu foto. Muy fiel en colores; no admite semilla fija y tu foto sale de tu equipo."
+    prompt: "{items}"
+    strength: null
+    steps: null
+    composite: true
+    api: {model: gpt-image-2, size: "1024x1536"}   # modelos disponibles: ver tools/probar_api_gpt.py
+  B:
+    name: "Intermedio · segmentación + inpainting + ControlNet"
+    description: "Detecta tu ropa y regenera solo esa zona (ControlNet sigue los bordes del cuerpo). Rostro, cabello, manos y fondo quedan idénticos a tu foto; los brazos solo cambian si la prenda es de manga larga."
+    prompt: "a person wearing {items}, realistic fashion photo, natural lighting, high quality"   # sin «detailed fabric»: inventaba estampados
+    strength: 1.0
+    steps: 20                # Euler da buena calidad con 20 (30 tardaba 1,5x más)
+    work_size: 640           # la zona de la ropa se regenera ampliada a 640 px (lado mayor) y se pega de vuelta
+    candidates: 2            # candidatos por look; se elige el más parecido a la descripción según CLIP
+    controlnet:              # ControlNet canny con los bordes de brazos y manos de la foto original: misma pose
+      enabled: true
+      repo: lllyasviel/control_v11p_sd15_openpose
+      revision: main         # se registra el commit real; fijarlo tras la primera ejecución
+      license: OpenRAIL
+      conditioning_scale: 0.8   # el esqueleto no tiene textura: no impone rayas ni marcas de agua (canny sí lo hacía)
+      guidance_end: 0.8
+    mask_labels:             # zona según el look (catalogo.*.zona)
+      superior: [Upper-clothes, Dress, Belt, Scarf]
+      completo: [Upper-clothes, Dress, Belt, Scarf, Skirt, Pants, Left-leg, Right-leg]   # pantalones y ternos
+      vestido: [Upper-clothes, Dress, Belt, Scarf, Skirt, Pants]                          # vestidos: piernas intactas
+    protect_labels: [Face, Hair, Hat, Sunglasses]
+    arm_labels: [Left-arm, Right-arm]   # se repintan solo si el look es de manga larga; si no, se protegen
+    hair_core_erode_px: 12   # del cabello solo se protege el núcleo: su borde sobre el hombro sí se repinta (sin piel entre mechones)
+    hand_from_wrist: {ahead: 0.30, radius: 0.45}  # mano = círculo más allá de la muñeca (fracciones del antebrazo); solo su piel
+    wrist_free: {back: 0.10, radius: 0.20}   # disco en la muñeca que sí se repinta (pulseras y relojes de la foto)
+    hand_halo_px: 10         # alrededor de la mano, fondo y cabello se conservan (evita dedos duplicados)
+    outer_closed: "worn closed and fully buttoned up"   # prendas exteriores: sin torso desnudo debajo
+    outer_inner: "over a plain solid white top"          # prenda de debajo lisa (antes salía a rayas)
+    long_extra_px: 28        # prendas largas (largo: true): la zona se amplía y pasa por detrás de la mano
+    upper_only_suffix: "with plain neutral-colored bottoms"   # looks solo de arriba: no inventar faldas de colores
+    # El segmentador no separa la mano del brazo: la pose (models.pose) ubica las muñecas y las manos se protegen.
+    # Sin pose, los looks de manga larga tampoco tocan los brazos (sin manos cubiertas de tela).
+    sleeve_terms: [manga larga, mangas largas, long sleeve, long-sleeve, blazer, saco, casaca, chaqueta, jacket, abrigo, coat, sueter, sweater, cardigan, hoodie, poleron, camisa, shirt, terno, suit, traje, esmoquin, tuxedo]
+    dilate_px: 15            # cubre las franjas de piel entre «ropa» y «brazo» (nunca rostro, cabello ni manos)
+    min_mask_fraction: 0.03  # menos ropa visible que esto: no se puede aplicar el enfoque B
+
+generation:
+  scheduler: euler
+  guidance_scale: 9.0        # 7.5 seguía menos el texto (colores y mangas) en las pruebas locales
+  negative_prompt: "bracelet, wristband, watch, bangle, jewelry on wrist, nude, naked, nsfw, extra hands, extra fingers, duplicate hands, mutated hands, lingerie, underwear, see-through, cleavage, low-cut neckline, bare chest, open shirt, cartoon, drawing, sketch, illustration, painting, anime, deformed face, disfigured, extra limbs, bad anatomy, blurry, lowres, watermark, text"
+  safety_checker: true
+  # SD 1.5 inventa estampados (rayas, lunares) en prendas lisas: se excluyen salvo que la prenda pedida los tenga
+  pattern_negative: "stripes, striped, polka dots, plaid, checkered, pattern, print, floral"
+  plain_hint: "plain solid-color fabric without any pattern"   # se añade al texto en prendas lisas
+  sleeves_hint: "matching long sleeves of the same fabric and color covering both arms down to the wrists"   # looks de manga larga; sin «same color» salían blancas
+
+# Accesorios: después de la ropa, una pasada (lentes + collar) en una zona
+# pequeña ubicada con la pose. Si la foto no muestra la zona (medio cuerpo, cuello cubierto por la prenda) se omite y se
+# registra en las métricas del look (accesorios_omitidos).
+accesorios:
+  prompt: "a person wearing {items}, realistic fashion photo, natural lighting, high quality"
+  negative_prompt: "sunglasses, dark tinted lenses, deformed face, distorted eyes, crossed eyes, extra fingers, extra hands, cartoon, drawing, blurry, lowres, watermark, text, logo"
+  min_side: 128            # caja mínima alrededor del accesorio: se amplía a work_size (más detalle en zonas chicas)
+  steps: 20
+  min_eye_px: 6            # ojos más juntos que esto (cara muy pequeña): sin lentes
+  lentes: {half_width: 1.05, half_height: 0.42}   # elipse en fracciones de la distancia entre ojos
+  collar: {below: 0.08, half_width: 0.28, half_height: 0.18}   # base del cuello, en fracciones del ancho de hombros
+  min_collar_px: 80        # menos piel visible en el escote: sin collar
+
+guardrails:
+  output_filter: registrar  # registrar: el filtro NSFW de SD solo se cuenta (bloqueaba ropa normal en las pruebas);
+                            # bloquear: reintenta y, si sigue, muestra un recuadro. La prevención va antes de generar.
+  nsfw_retries: 2           # solo con output_filter: bloquear
+  min_face_ssim: 0.45        # identidad: SSIM de la región del rostro; por debajo se reintenta 1 vez y se marca
+  max_faces: 1
+  bg_keep_diff: 28           # fondo que casi no cambió tras generar: se restaura el original (sin «sombras»)
+  label: "Simulación IA"
+  blocked_terms:             # instrucción escrita (ES y EN) y su traducción; coincidencia por raíz
+    sexual: [desnud, desvest, sin ropa, lencer, ropa interior, ropa intima, transparente, topless, sensual, sexy, erotic, nude, naked, undress, lingerie, underwear, see-through, sheer, bikini, nsfw]
+    cuerpo: [adelgaz, mas delgad, flaca, gordo, gorda, mas alt, aclarar la piel, piel mas clara, blanquear, busto, pechos, cintura mas, thinner, slimmer, skinny, lighter skin, whiter skin, bigger breast]
+    menores: [nino, nina, menor de edad, escolar, colegial, child, kid, teen, schoolgirl, schoolboy]
+    violencia: [sangre, arma, pistola, cuchillo, blood, weapon, gun, knife]
+    marcas: [gucci, prada, nike, adidas, louis vuitton, chanel, zara, h&m]
+
+llms:
+  qwen:
+    name: "Qwen2.5-1.5B-Instruct"
+    repo: Qwen/Qwen2.5-1.5B-Instruct
+    revision: 989aa7980e4cf806f80c7fef2b1adb7bc71aa306
+    license: Apache-2.0
+    max_new_tokens: 300
+  phi:
+    name: "Phi-3.5-mini-instruct"
+    repo: microsoft/Phi-3.5-mini-instruct
+    revision: main           # se registra el commit real; fijarlo tras la primera ejecución
+    license: MIT
+    max_new_tokens: 300
+
+app:
+  sessions_dir: sesiones_vitrina
+  clip_metrics: true
+
+negocio:
+  usd_por_imagen_api: 0.023  # MEDIDO: saldo 10,00 → 9,86 USD tras 6 imágenes gpt-image-2 (redondeado); verificar en el panel
+  precio_gpu_usd_h: 0.35     # SUPUESTO ilustrativo (tarifa a verificar); solo para estimar el costo por prueba
+
+# Catálogo de demostración (prendas ficticias, sin precios). prompt = fragmento en inglés para el modelo.
+# zona: completo = también cubre piernas (pantalón, terno, vestido); por defecto superior (torso).
+# mangas: largas = se repintan los brazos para poner la manga (las manos se protegen); por defecto los brazos
+# no se tocan (prendas sin mangas o de manga corta).
+# capa: exterior = prenda de encima. Cada prompt describe UNA prenda con UN color: con dos colores («X sobre una
+# camisa blanca») SD 1.5 los mezcla (el blazer negro salía blanco o a rayas). Por eso la prenda interior no se
+# detalla.
+catalogo:
+  m_blusa_blanca: {nombre: "Blusa blanca de botones", linea: mujer, prompt: "a crisp white button-up blouse", mangas: largas, lora: vtr_m_blusa_blanca}
+  m_pantalon_gris: {nombre: "Pantalón de vestir gris", linea: mujer, prompt: "grey high-waisted dress trousers", zona: completo, parte: abajo}
+  m_pantalon_negro: {nombre: "Pantalón negro de vestir", linea: mujer, prompt: "black tailored dress trousers", zona: completo, parte: abajo}  # neutro: no mezcla color con blusa blanca ni camisa celeste
+  m_jean_azul: {nombre: "Jean azul recto", linea: mujer, prompt: "classic blue straight-leg jeans", zona: completo, parte: abajo}
+  m_traje_beige: {nombre: "Traje sastre beige", linea: mujer, prompt: "a light sand-beige cream tailored pantsuit", zona: completo, mangas: largas}
+  m_vestido_rojo: {nombre: "Vestido largo rojo de satén", linea: mujer, prompt: "an elegant sleeveless red satin evening dress", zona: vestido}  # con manga larga salían mangas blancas
+  m_vestido_floral: {nombre: "Vestido floral de verano", linea: mujer, prompt: "a modest floral summer dress with short sleeves", zona: vestido}
+  h_terno_azul: {nombre: "Terno azul marino", linea: hombre, prompt: "a navy blue suit with a white dress shirt and tie", zona: completo, mangas: largas}
+  h_blazer_gris: {nombre: "Blazer gris", linea: hombre, prompt: "solid grey blazer", mangas: largas, capa: exterior}
+  h_camisa_celeste: {nombre: "Camisa celeste de vestir", linea: hombre, prompt: "a light blue dress shirt", mangas: largas}
+  h_camisa_blanca: {nombre: "Camisa blanca clásica", linea: hombre, prompt: "a classic white dress shirt", mangas: largas}
+  h_sueter_azul: {nombre: "Suéter azul cuello redondo", linea: hombre, prompt: "solid navy crew-neck sweater", mangas: largas}
+  h_esmoquin: {nombre: "Esmoquin negro", linea: hombre, prompt: "a black tuxedo with a bow tie", zona: completo, mangas: largas}
+  h_terno_gris: {nombre: "Terno gris carbón", linea: hombre, prompt: "a charcoal grey suit with a white shirt", zona: completo, mangas: largas}
+  h_blazer_burdeos: {nombre: "Blazer burdeos", linea: hombre, prompt: "solid burgundy velvet blazer", mangas: largas, capa: exterior}
+  h_casaca_jean: {nombre: "Casaca de jean", linea: hombre, prompt: "solid blue denim jacket", mangas: largas, capa: exterior}
+  h_casaca_cuero: {nombre: "Casaca de cuero marrón", linea: hombre, prompt: "solid brown leather jacket", mangas: largas, capa: exterior}
+  h_camisa_lino: {nombre: "Camisa de lino blanca", linea: hombre, prompt: "a white linen shirt", mangas: largas}
+  h_hoodie_gris: {nombre: "Polerón gris", linea: hombre, prompt: "a grey hoodie", mangas: largas}
+  h_camisa_cuadros: {nombre: "Camisa a cuadros", linea: hombre, prompt: "a red and navy plaid flannel shirt", mangas: largas}
+
+  h_cuello_alto: {nombre: "Suéter de cuello alto negro", linea: hombre, prompt: "a black turtleneck sweater", mangas: largas}
+  h_camisa_oxford: {nombre: "Camisa oxford blanca", linea: hombre, prompt: "a white oxford button-down shirt", mangas: largas}
+  h_bomber: {nombre: "Casaca bomber verde", linea: hombre, prompt: "solid olive green bomber jacket", mangas: largas}
+  h_sueter_verde: {nombre: "Suéter verde cuello en V", linea: hombre, prompt: "solid forest green v-neck sweater", mangas: largas}
+  h_camisa_denim: {nombre: "Camisa denim", linea: hombre, prompt: "a light blue denim button-up shirt", mangas: largas}
+  h_blazer_azul: {nombre: "Blazer azul marino", linea: hombre, prompt: "solid navy blue blazer", mangas: largas}
+  h_camiseta_gris: {nombre: "Camiseta gris básica", linea: hombre, prompt: "a plain heather grey t-shirt"}
+  h_terno_beige: {nombre: "Terno de lino beige", linea: hombre, prompt: "a beige linen suit with a white shirt", zona: completo, mangas: largas}
+  m_camisa_celeste: {nombre: "Camisa celeste", linea: mujer, prompt: "a light blue button-up shirt", mangas: largas, lora: vtr_m_camisa_celeste}
+  h_pantalon_gris: {nombre: "Pantalón de vestir gris", linea: hombre, prompt: "grey tailored dress trousers", zona: completo, parte: abajo}
+  h_chino_beige: {nombre: "Pantalón chino beige", linea: hombre, prompt: "beige chino trousers", zona: completo, parte: abajo}
+  h_short_chino: {nombre: "Short chino azul marino", linea: hombre, prompt: "solid dark navy blue chino shorts above the knee", zona: completo, parte: abajo, piernas: true}  # solo si la foto muestra piernas
+  h_jean_oscuro: {nombre: "Jean azul oscuro", linea: hombre, prompt: "dark blue slim jeans", zona: completo, parte: abajo}
+  # Accesorios (tipo: accesorio): segunda pasada de inpainting solo en su zona (lentes, collar). Aretes y calzado se probaron y se retiraron.
+  m_lentes_negros: {nombre: "Lentes negros rectangulares", linea: mujer, tipo: accesorio, zona: lentes, prompt: "thin black rectangular eyeglasses with clear lenses"}
+  m_lentes_carey: {nombre: "Lentes de carey marrón redondos", linea: mujer, tipo: accesorio, zona: lentes, prompt: "thick brown tortoiseshell round eyeglasses with clear lenses", negativo: "thin frames, silver, metal"}
+  m_lentes_dorados: {nombre: "Lentes dorados finos", linea: mujer, tipo: accesorio, zona: lentes, prompt: "thin gold metal oval eyeglasses with clear lenses"}
+  m_collar_dorado: {nombre: "Collar dorado fino", linea: mujer, tipo: accesorio, zona: collar, prompt: "a delicate thin gold chain necklace with a small pendant"}
+  m_collar_perlas: {nombre: "Collar de perlas", linea: mujer, tipo: accesorio, zona: collar, prompt: "a classic short white pearl necklace"}
+  h_lentes_negros: {nombre: "Lentes negros rectangulares", linea: hombre, tipo: accesorio, zona: lentes, prompt: "thin black rectangular eyeglasses with clear lenses"}
+  h_lentes_carey: {nombre: "Lentes de carey marrón", linea: hombre, tipo: accesorio, zona: lentes, prompt: "thick brown tortoiseshell square eyeglasses with clear lenses", negativo: "thin frames, silver, metal"}
+  h_lentes_metal: {nombre: "Lentes de metal plateado", linea: hombre, tipo: accesorio, zona: lentes, prompt: "thin silver metal round eyeglasses with clear lenses"}
+# Ocasiones: 7 a 10 looks por línea (solo prendas validadas con modelos reales). Modo prueba: los 5 primeros (reproducible); producción: 5 al azar. Una nueva
+# ronda sustituye cada look rechazado por otro de la ocasión aún no mostrado.
+ocasiones:
+  trabajo:
+    nombre: Trabajo
+    mujer: [[m_blusa_blanca, m_pantalon_gris], [m_traje_beige, m_lentes_negros], [m_camisa_celeste, m_pantalon_negro], [m_blusa_blanca, m_pantalon_negro, m_collar_perlas], [m_camisa_celeste, m_jean_azul], [m_blusa_blanca, m_pantalon_gris, m_lentes_carey], [m_camisa_celeste, m_jean_azul, m_collar_dorado]]
+    hombre: [[h_terno_azul], [h_camisa_celeste, h_pantalon_gris], [h_sueter_azul, h_pantalon_gris, h_lentes_negros], [h_blazer_gris, h_pantalon_gris], [h_camisa_blanca, h_chino_beige], [h_terno_gris], [h_camisa_oxford, h_pantalon_gris], [h_blazer_azul, h_chino_beige], [h_sueter_verde, h_chino_beige]]
+  reunion:
+    nombre: Reunión
+    mujer: [[m_traje_beige], [m_blusa_blanca, m_pantalon_gris, m_lentes_negros], [m_camisa_celeste, m_pantalon_negro], [m_blusa_blanca, m_pantalon_negro, m_collar_perlas], [m_camisa_celeste, m_jean_azul], [m_camisa_celeste, m_pantalon_negro, m_lentes_dorados], [m_blusa_blanca, m_pantalon_gris, m_collar_dorado]]
+    hombre: [[h_terno_gris], [h_blazer_gris, h_pantalon_gris], [h_camisa_blanca, h_pantalon_gris, h_lentes_carey], [h_sueter_azul, h_chino_beige], [h_terno_azul], [h_camisa_celeste, h_chino_beige], [h_blazer_burdeos, h_pantalon_gris], [h_blazer_azul, h_pantalon_gris], [h_terno_beige]]
+  evento:
+    nombre: Evento
+    mujer: [[m_vestido_rojo], [m_traje_beige, m_lentes_negros], [m_vestido_floral], [m_blusa_blanca, m_pantalon_gris, m_collar_perlas], [m_camisa_celeste, m_pantalon_negro], [m_blusa_blanca, m_pantalon_negro], [m_camisa_celeste, m_jean_azul], [m_blusa_blanca, m_pantalon_gris, m_lentes_carey], [m_camisa_celeste, m_pantalon_negro, m_collar_dorado]]
+    hombre: [[h_esmoquin], [h_blazer_burdeos, h_pantalon_gris], [h_terno_azul, h_lentes_metal], [h_terno_gris], [h_blazer_gris, h_pantalon_gris], [h_camisa_blanca, h_pantalon_gris], [h_terno_beige], [h_blazer_azul, h_chino_beige]]
+  casual:
+    nombre: Casual
+    mujer: [[m_blusa_blanca, m_pantalon_negro], [m_vestido_floral], [m_camisa_celeste, m_jean_azul], [m_camisa_celeste, m_pantalon_negro, m_collar_perlas], [m_blusa_blanca, m_pantalon_gris], [m_blusa_blanca, m_pantalon_negro, m_lentes_dorados], [m_camisa_celeste, m_jean_azul, m_collar_dorado]]
+    hombre: [[h_camisa_lino, h_short_chino], [h_camisa_cuadros, h_short_chino], [h_casaca_jean, h_jean_oscuro, h_lentes_negros], [h_casaca_cuero, h_jean_oscuro], [h_hoodie_gris, h_jean_oscuro], [h_camisa_cuadros, h_jean_oscuro], [h_camisa_lino, h_chino_beige], [h_bomber, h_jean_oscuro], [h_camisa_denim, h_chino_beige], [h_sueter_verde, h_jean_oscuro]]
+
+# Instrucción escrita: la misma prenda en 5 variantes, para que las cinco opciones sean distintas.
+instruction_variants: ["", "in a neutral color palette", "in a bold color palette", "with a relaxed fit", "with a tailored fit"]
+
+resources:
+  t4: {min_vram_gb: 12, min_ram_gb: 10, min_disk_gb: 14}
+
+app_approaches: [B, API]   # enfoques visibles en la app; API solo con clave (.env). El A local (img2img) queda en el código
+
+# Igual que config/pilot.yaml: se COMPRUEBA sin red ni pip (p2/env_check.validate).
+dependencies:
+  required:
+    torch: ">=2.4"
+    torchvision: ""
+    transformers: ">=4.45"
+    accelerate: ""
+    huggingface-hub: ""
+    diffusers: ">=0.40.0"   # mínimo; las versiones más nuevas que las probadas solo avisan (dependencies.tested)
+    safetensors: ""
+    numpy: ""
+    pillow: ""
+    scikit-image: ""
+    opencv-python: ""
+    scipy: ""
+    psutil: ""
+    pydantic: ">=2"
+    pyyaml: ""
+    packaging: ""
+  verify_declared_requirements_of: [diffusers, transformers, accelerate]
+  # Últimas versiones probadas. Fuera de este rango NO se bloquea (Colab actualiza paquetes a menudo):
+  # se avisa y la prueba de importación real (env_check.import_smoke) decide.
+  tested:
+    diffusers: "<0.42"   # 0.41.0 probado en Colab (oct-2026)
+  optional: {}

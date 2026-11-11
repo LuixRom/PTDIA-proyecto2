@@ -94,7 +94,12 @@ def test_hub2_blocks_because_diffusers_declares_lt2(cfg):
     assert not s["ok"] and any("diffusers requiere huggingface-hub" in p for p in s["problems"])
 
 
-@pytest.mark.parametrize("ver", ["0.39.0", "0.42.0"])
+def test_newer_diffusers_than_tested_only_warns(cfg):
+    s = validate(cfg, *fake({**COLAB, "diffusers": "0.42.1"}))
+    assert s["ok"] and any(w.startswith("diffusers 0.42.1 es más nueva") for w in s["warnings"])
+
+
+@pytest.mark.parametrize("ver", ["0.39.0"])
 def test_diffusers_outside_accepted_range(cfg, ver):
     s = validate(cfg, *fake({**COLAB, "diffusers": ver}))
     assert not s["ok"] and any(p.startswith(f"diffusers {ver} fuera del rango") for p in s["problems"])

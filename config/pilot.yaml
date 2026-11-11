@@ -87,7 +87,7 @@ dependencies:
     transformers: ">=4.45"
     accelerate: ""
     huggingface-hub: ""
-    diffusers: ">=0.40.0,<0.42"   # 0.40.0 probado en Untitled1.ipynb; 0.41.0 (preinstalado en Colab) aceptado
+    diffusers: ">=0.40.0"   # mínimo; las versiones más nuevas que las probadas solo avisan (dependencies.tested)
     safetensors: ""
     numpy: ""
     pillow: ""
@@ -101,5 +101,9 @@ dependencies:
   # Además se verifican las dependencias DECLARADAS por estos paquetes instalados
   # (p.ej. diffusers 0.41.0 declara huggingface-hub>=1.32.0,<2.0).
   verify_declared_requirements_of: [diffusers, transformers, accelerate]
+  # Últimas versiones probadas. Fuera de este rango NO se bloquea (Colab actualiza paquetes a menudo):
+  # se avisa y la prueba de importación real (env_check.import_smoke) decide.
+  tested:
+    diffusers: "<0.42"   # 0.41.0 probado en Colab (oct-2026)
   optional:
     lpips: "==0.1.4"   # si falta, la celda 7 se detiene salvo que ACEPTO_SIN_LPIPS = True

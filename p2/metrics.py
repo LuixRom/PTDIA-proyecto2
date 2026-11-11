@@ -60,7 +60,9 @@ class Models:
 
     def txt_emb(self, text):
         with self.torch.no_grad():
-            e = clip_features(self.clip.get_text_features(**self.proc(text=[text], return_tensors="pt", padding=True).to(self.device)))
+            # CLIP admite 77 tokens: las descripciones largas se truncan (si no, error)
+            enc = self.proc(text=[text], return_tensors="pt", padding=True, truncation=True, max_length=77)
+            e = clip_features(self.clip.get_text_features(**enc.to(self.device)))
         return (e / e.norm(dim=-1, keepdim=True))[0]
 
 

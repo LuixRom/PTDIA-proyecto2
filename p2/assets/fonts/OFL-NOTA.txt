@@ -1,0 +1,4 @@
+Tipografías incluidas para que la interfaz se vea igual sin internet (subconjunto latino, fuentes variables):
+- Big Shoulders Display (Patric King / Chicago Design Collective): SIL Open Font License 1.1
+- Hanken Grotesk (Hanken Design Co.): SIL Open Font License 1.1
+Obtenidas de Google Fonts. La licencia OFL permite usarlas y redistribuirlas con el proyecto: https://openfontlicense.org

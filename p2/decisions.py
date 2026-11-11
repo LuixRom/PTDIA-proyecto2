@@ -52,6 +52,13 @@ class DecisionStore:
                                      "previous": previous, "reason": v.reason})
         return s
 
+    def replace(self, session: Session, event: dict):
+        """Guarda una sesión modificada (nueva ronda o restauración) y registra el evento."""
+        with self._lock:
+            self._save(session)
+            self._event(session.session_id, event)
+        return session
+
     def summary_ready(self, session_id):
         return self.load(session_id).complete()
 

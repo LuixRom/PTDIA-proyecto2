@@ -43,10 +43,10 @@ REVISIÓN: tu respuesta anterior no superó la verificación automática por est
 Escribe de nuevo la respuesta completa corrigiéndolos y respetando el formato."""
 
 
-def build_prompt(session: Session) -> str:
+def build_prompt(session: Session, template: str = PROMPT) -> str:
     datos = [{"id": v.id, "atributo": v.attribute, "decision": v.decision, "motivo": v.reason}
              for v in session.variations]
-    return PROMPT.format(datos=json.dumps(datos, ensure_ascii=False, indent=1))
+    return template.format(datos=json.dumps(datos, ensure_ascii=False, indent=1))
 
 
 def parse_json(text: str):
@@ -71,19 +71,50 @@ def template_summary(session: Session) -> dict:
     return {"aceptadas": acc, "rechazadas": rej, "resumen": texto}
 
 
-def explain(session: Session, llm: Callable[[str], str], verify: Callable, llm_name="stub", max_retries=2) -> ExplainResult:
+MOTIVO_PROMPT = """Reescribe en una sola frase breve, en tercera persona y en español, lo que dijo el cliente.
+No digas si algo fue aceptado o rechazado y no menciones códigos como V1.
+Lo que dijo el cliente: {motivo}
+Frase:"""
+
+
+def _por_look(session: Session, llm: Callable[[str], str], raw: list) -> dict:
+    """Plan B antes de la plantilla: el programa fija el estado de cada variación y el LLM solo reescribe el motivo.
+    Un modelo chico ignora «una frase por variación»; así no puede confundir una decisión."""
+    frases = []
+    for v in session.variations:
+        base = f"{v.id} ({v.attribute}) fue {'aceptada' if v.decision == 'aceptada' else 'rechazada'}"
+        motivo = (v.reason or "").strip()
+        if not motivo:
+            frases.append(base + "; el cliente no indicó motivo.")
+            continue
+        raw.append(llm(MOTIVO_PROMPT.format(motivo=motivo)))
+        frase = (raw[-1].strip().splitlines() or [""])[0].strip().strip('"').rstrip(".")
+        if not frase or re.search(r"V\d+|acept|rechaz", frase, re.IGNORECASE):
+            frase = motivo.rstrip(".")  # el LLM nombró un estado o un ID: se usa lo que escribió el cliente
+        frases.append(f"{base} porque {frase[0].lower() + frase[1:]}.")
+    return {"aceptadas": session.accepted(), "rechazadas": session.rejected(), "resumen": " ".join(frases)}
+
+
+def explain(session: Session, llm: Callable[[str], str], verify: Callable, llm_name="stub", max_retries=2,
+            template: str = PROMPT) -> ExplainResult:
     if not session.complete():
         raise ValueError("No se puede resumir: hay variaciones sin decidir.")
-    base = build_prompt(session)
+    base = build_prompt(session, template)
     prompt, errors, raw = base, [], []
     for attempt in range(1, max_retries + 2):
         raw.append(llm(prompt))
         data = parse_json(raw[-1])
+        if isinstance(data, dict):  # las listas salen del registro, no del LLM: el modelo chico las confunde
+            data["aceptadas"], data["rechazadas"] = session.accepted(), session.rejected()
         errors = ["La respuesta del LLM no es JSON válido."] if data is None else verify(data, session)
         if not errors:
             return ExplainResult(summary=Summary(**data), verified=True, attempts=attempt, fallback=False,
                                  llm=llm_name, raw_responses=raw)
         prompt = base + CORRECTION.format(errores="\n".join(f"- {e}" for e in errors))
+    data = _por_look(session, llm, raw)
+    if not verify(data, session):
+        return ExplainResult(summary=Summary(**data), verified=True, attempts=max_retries + 2, fallback=False,
+                             llm=llm_name, raw_responses=raw)
     data = template_summary(session)
     final_errors = verify(data, session)
     return ExplainResult(summary=Summary(**data), verified=not final_errors, errors=errors + final_errors,

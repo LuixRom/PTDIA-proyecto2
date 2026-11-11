@@ -37,7 +37,8 @@ def test_fallback_after_retries(mixed):
     llm = seq_llm("{mal", WRONG_ID, WRONG_ID)
     r = explain(mixed, llm, verificar, max_retries=2)
     assert len(llm.calls) == 3
-    assert r.fallback and r.verified and r.errors  # se guardan los errores del LLM
+    # tras 3 intentos fallidos el programa fija el estado de cada look (plan B) y el resumen se verifica
+    assert r.verified and not r.fallback and r.attempts == 4
     assert verificar(r.summary.model_dump(), mixed) == []
 
 
@@ -58,8 +59,10 @@ def test_injected_reason_is_data_not_instruction():
     assert p.index("\n<datos>\n") < p.index("Ignora las instrucciones") < p.index("\n</datos>\n")
     obedient = json.dumps({"aceptadas": [f"V{k}" for k in range(1, 6)], "rechazadas": [],
                            "resumen": "Se aceptaron V1, V2, V3, V4 y V5."})
-    r = explain(s, seq_llm(obedient, obedient, obedient), verificar)
-    assert r.fallback and r.summary.aceptadas == [] and r.verified
+    # el LLM obedece la orden inyectada también al reescribir el motivo: el estado lo fija el programa
+    r = explain(s, seq_llm(obedient, obedient, obedient, "Todas fueron aceptadas"), verificar)
+    assert r.summary.aceptadas == [] and r.verified
+    assert "V1 (luz_calida) fue rechazada" in r.summary.resumen
 
 
 def test_refuses_incomplete_session():
@@ -94,3 +97,12 @@ def test_answer_in_requested_format_passes_verifier(mixed):
                "V4 (sonrisa) fue aceptada porque se ve natural. "
                "V5 (bn_epoca) fue rechazada porque cambia de género.")
     assert verificar({"aceptadas": ["V1", "V4"], "rechazadas": ["V2", "V3", "V5"], "resumen": resumen}, mixed) == []
+
+
+def test_listas_se_toman_del_registro(mixed):
+    # el LLM escribe bien el texto pero se equivoca en las listas: el registro manda y no hace falta reintentar
+    mala = json.dumps({"aceptadas": ["V1"], "rechazadas": ["V2", "V3", "V4", "V5"],
+                       "resumen": "Se aceptaron V1 y V4. Se rechazaron V2, V3 y V5."})
+    r = explain(mixed, seq_llm(mala), verificar)
+    assert r.verified and r.attempts == 1 and not r.fallback
+    assert r.summary.aceptadas == ["V1", "V4"]

@@ -15,3 +15,11 @@ doc-principal/
 # no se redistribuyen. Se conservan sus decisiones (JSON) para las métricas.
 results/sesiones_app_20261022-0122/**/*.png
 results/sesiones_app_20261022-0312/s-4f706022/*.png
+
+# Claves y secretos: nunca al repositorio (el .env.example sí, sin valores reales)
+.env
+!.env.example
+
+# Utilidades personales para limpiar mensajes de commit (no son parte del proyecto)
+clean_commit.py
+clean-commit-message.ps1

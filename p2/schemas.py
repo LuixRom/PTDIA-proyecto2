@@ -25,6 +25,8 @@ class Variation(BaseModel):
     decision: Optional[DecisionValue] = None
     reason: str = ""
     decided_at: Optional[str] = None
+    round: int = 1                  # Vitrina: ronda en la que se generó esta imagen
+    items: list[str] = []           # Vitrina: IDs de prendas del catálogo que muestra
 
 
 class Session(BaseModel):
@@ -33,6 +35,8 @@ class Session(BaseModel):
     created_at: str = Field(default_factory=now_iso)
     participant: str = Field(default="", max_length=40)  # alias anónimo (prueba con participantes)
     variations: list[Variation]
+    round: int = 1                  # Vitrina: ronda actual (1 = primera generación)
+    options: dict = {}              # Vitrina: modo, ocasión, línea, enfoque, semillas, LLM elegidos
 
     @field_validator("variations")
     @classmethod

@@ -169,6 +169,8 @@ for p in state["problems"]:
     print(" ✗", p)
 for u in state["uncertain"]:
     print(" ?", u)
+for w in state.get("warnings", []):
+    print(" ⚠", w)
 env_check.save_validation(state, VALIDATION_PATH)
 if not state["ok"]:
     raise SystemExit("Validación NO superada: hay incompatibilidades o dependencias no verificables (✗/?). "

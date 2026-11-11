@@ -65,7 +65,7 @@ def test_config_invariants(cfg):
     assert cfg["dataset"]["allowed_models"] == ["SDXL"]
     assert len(cfg["attribute_texts"]) == 5
     d = cfg["dependencies"]
-    assert d["required"]["diffusers"] == ">=0.40.0,<0.42" and d["optional"] == {"lpips": "==0.1.4"}
+    assert d["required"]["diffusers"] == ">=0.40.0" and d["tested"]["diffusers"] == "<0.42" and d["optional"] == {"lpips": "==0.1.4"}
     assert {"diffusers", "transformers", "accelerate"} <= set(d["verify_declared_requirements_of"])
 
 

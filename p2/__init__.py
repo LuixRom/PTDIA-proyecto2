@@ -8,4 +8,4 @@ funciones, para que el resto (esquemas, decisiones, verificador, UI con mock) se
 pueda probar en Windows sin GPU ni modelos.
 """
 
-__version__ = "0.5.0"  # 0.5.0: alias, SUS, BD temporal, enlace público opcional y borrado
+__version__ = "3.8.0"  # 3.8.0: enfoque «API» (OpenAI, de pago) como nivel básico, con consentimiento y costo estimado

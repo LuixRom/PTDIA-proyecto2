@@ -146,6 +146,14 @@ def validate(cfg, version_fn=_version, requires_fn=metadata.requires):
         p, u, c = check_declared_requirements(dist, version_fn, requires_fn)
         probs, unc, checked = probs + p, unc + u, checked + c
 
+    warns = []
+    for name, spec in deps.get("tested", {}).items():
+        v = version_fn(name)
+        ok, err = _in_spec(v, spec, name) if v is not None else (True, None)
+        if not ok and not err:  # más nueva que lo probado: aviso, no bloqueo
+            warns.append(f"{name} {v} es más nueva que la última versión probada ({spec}). Se continúa: la "
+                         "importación real se comprueba a continuación; si algo falla, se informará ahí.")
+
     optional = {}
     for name, spec in deps.get("optional", {}).items():
         v = version_fn(name)
@@ -158,7 +166,7 @@ def validate(cfg, version_fn=_version, requires_fn=metadata.requires):
         optional[name] = entry
 
     versions = installed_versions(version_fn=version_fn)
-    return {"ok": not probs and not unc, "problems": probs, "uncertain": unc, "checked": checked,
+    return {"ok": not probs and not unc, "problems": probs, "uncertain": unc, "checked": checked, "warnings": warns,
             "optional": optional, "versions": versions, "fingerprint": fingerprint(versions),
             "config_sha256": cfg["_sha256"], "validated_at": now_iso(), "network_used": False}
 
@@ -170,9 +178,11 @@ def import_smoke(state):
     try:
         from .compat import neutralize_incompatible_torchao
         msgs.append(neutralize_incompatible_torchao())
-        from diffusers import AutoPipelineForImage2Image, EulerDiscreteScheduler  # noqa: F401
-        from transformers import CLIPModel, CLIPProcessor  # noqa: F401
-        msgs.append("diffusers (AutoPipelineForImage2Image, EulerDiscreteScheduler) y transformers (CLIP) importan bien.")
+        from diffusers import (AutoPipelineForImage2Image, AutoPipelineForInpainting, ControlNetModel,  # noqa: F401
+                               EulerDiscreteScheduler, StableDiffusionControlNetInpaintPipeline)
+        from transformers import (AutoModelForSemanticSegmentation, CLIPModel, CLIPProcessor,  # noqa: F401
+                                  VitPoseForPoseEstimation, VitPoseImageProcessor)
+        msgs.append("diffusers (img2img, inpainting, ControlNet, Euler) y transformers (CLIP, segmentación) importan bien.")
     except Exception as e:  # cualquier fallo de importación bloquea las celdas 6 y 7
         probs.append(f"Importación fallida: {type(e).__name__}: {str(e).splitlines()[0][:300]}")
     state["import_smoke"] = {"ok": not probs, "messages": msgs, "problems": probs}

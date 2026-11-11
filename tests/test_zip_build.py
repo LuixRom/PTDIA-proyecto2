@@ -28,7 +28,8 @@ def _cfg_from_zip(z):
 
 def test_zip_has_range_not_exact_pin(built):
     cfg = _cfg_from_zip(built)
-    assert cfg["dependencies"]["required"]["diffusers"] == ">=0.40.0,<0.42"
+    assert cfg["dependencies"]["required"]["diffusers"] == ">=0.40.0"
+    assert cfg["dependencies"]["tested"]["diffusers"] == "<0.42"  # más nueva: aviso, no bloqueo
     assert not re.search(r'^\s*diffusers:\s*"0\.40\.0"\s*$', built.read("config/pilot.yaml").decode(), re.M)
 
 
@@ -55,10 +56,11 @@ def test_zip_notebook_uses_new_validation_and_matching_version(built):
 
 
 @pytest.mark.parametrize("ver,ok", [("0.40.0", True), ("0.41.0", True), ("0.41.5", True),
-                                    ("0.39.9", False), ("0.42.0", False), ("1.0.0", False)])
+                                    ("0.39.9", False), ("0.42.0", True), ("0.42.1", True)])
 def test_zip_config_accepts_041_and_blocks_out_of_range(built, ver, ok):
     s = validate(_cfg_from_zip(built), *fake({**COLAB, "diffusers": ver}))
     assert s["ok"] is ok, (s["problems"], s["uncertain"])
+    assert bool(s["warnings"]) is (ver >= "0.42")  # versión no probada: se avisa
     if not ok:
         assert any(p.startswith(f"diffusers {ver} fuera del rango") for p in s["problems"])
 
