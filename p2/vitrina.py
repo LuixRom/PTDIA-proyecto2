@@ -715,6 +715,40 @@ def session_metrics(store, sid, cfg):
         "imagenes_api": n_api,
         "costo_api_estimado_usd": round(n_api * cfg["negocio"].get("usd_por_imagen_api", 0), 3),
         "nota_costo": "estimación con precio de GPU supuesto (config negocio.precio_gpu_usd_h)",
+        **metricas_estilo(s, hist, cfg),
+    }
+
+
+def metricas_estilo(s, hist, cfg):
+    """Correspondencia entre decisiones e iteraciones y coherencia entre preferencias e iteraciones.
+    - tasa_aceptacion_por_ronda: aceptados / decididos entre los looks GENERADOS en cada ronda (r1, r2, …).
+    - regeneradas_que_estaban_rechazadas: de los looks reemplazados por una nueva ronda (sin contar restauraciones),
+      cuántos había rechazado el cliente (100 % salvo que pida regenerar «Las 5»).
+    - ronda_estilo_respeta_no_quiero / ronda_estilo_coincide_quiero: de los looks elegidos con el perfil, cuántos no
+      tienen nada de «No quiero» y cuántos tienen al menos un «Quiero» (el perfil usado en esa ronda)."""
+    por_ronda = {}
+    for d in estilo.decididos(s):
+        a, n = por_ronda.get(d["ronda"], (0, 0))
+        por_ronda[d["ronda"]] = (a + (d["decision"] == "aceptada"), n + 1)
+    restauradas = {h["round"] for h in hist if h["kind"] == "restaurada"}
+    reempl = [d for d in s.options.get("decididos", []) if d.get("reemplazada_en") not in restauradas]
+    respeta, coincide = [], []
+    for h in hist:
+        if h["kind"] != "ronda_estilo":
+            continue
+        q, n = set(h["estilo"]["quiero"]), set(h["estilo"]["no_quiero"])
+        for x in h["specs"]:
+            if x["id"] in h["regenerated"]:
+                t = set(estilo.etiquetas(cfg, x["items"]))
+                respeta.append(not t & n)
+                coincide.append(bool(t & q))
+    pct = lambda xs: round(100 * sum(xs) / len(xs), 1) if xs else None  # noqa: E731
+    return {
+        "tasa_aceptacion_por_ronda": {f"r{r}": round(a / n, 2) for r, (a, n) in sorted(por_ronda.items())},
+        "rondas_con_estilo": sum(h["kind"] == "ronda_estilo" for h in hist),
+        "regeneradas_que_estaban_rechazadas_pct": pct([d["decision"] == "rechazada" for d in reempl]),
+        "ronda_estilo_respeta_no_quiero_pct": pct(respeta),
+        "ronda_estilo_coincide_quiero_pct": pct(coincide),
     }
 
 
