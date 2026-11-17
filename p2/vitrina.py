@@ -139,6 +139,7 @@ def looks_for(cfg, opts, rng=None):
         all_looks = [_look(cfg, items, lora=bool(opts.get("lora"))) for items in looks_items]
         if opts.get("seed_mode") != "prueba" and rng is not None:
             rng.shuffle(all_looks)
+            all_looks = _variados(cfg, all_looks)
         return all_looks[:5], all_looks[5:]
     if mode == "catalogo":
         items = list(dict.fromkeys(opts.get("items") or []))
@@ -150,6 +151,19 @@ def looks_for(cfg, opts, rng=None):
         return [{"name": f"{es} ({VARIANT_NAMES[k]})", "items": [],
                  "text": f"{en} {v}".strip()} for k, v in enumerate(cfg["instruction_variants"])], []
     raise ValueError(f"Modo desconocido: {mode!r}")
+
+
+def _variados(cfg, looks, n=5):
+    """Reordena para que los n primeros cubran la mayor cantidad de cortes y colores distintos (la ronda 1 explora).
+    Los empates se resuelven por el orden recibido (ya barajado en producción)."""
+    from .estilo import etiquetas
+    resto, out, vistos = list(looks), [], set()
+    while resto and len(out) < n:
+        lk = max(resto, key=lambda x: len(set(etiquetas(cfg, x["items"], ("color", "corte"))) - vistos))
+        resto.remove(lk)
+        out.append(lk)
+        vistos |= set(etiquetas(cfg, lk["items"], ("color", "corte")))
+    return out + resto
 
 
 def seed_for(cfg, seed_mode, round_no, k, rng):

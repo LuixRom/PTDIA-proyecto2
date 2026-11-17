@@ -151,40 +151,54 @@ negocio:
 # camisa blanca») SD 1.5 los mezcla (el blazer negro salía blanco o a rayas). Por eso la prenda interior no se
 # detalla.
 catalogo:
-  m_blusa_blanca: {nombre: "Blusa blanca de botones", linea: mujer, prompt: "a crisp white button-up blouse", mangas: largas, lora: vtr_m_blusa_blanca}
-  m_pantalon_gris: {nombre: "Pantalón de vestir gris", linea: mujer, prompt: "grey high-waisted dress trousers", zona: completo, parte: abajo}
-  m_pantalon_negro: {nombre: "Pantalón negro de vestir", linea: mujer, prompt: "black tailored dress trousers", zona: completo, parte: abajo}  # neutro: no mezcla color con blusa blanca ni camisa celeste
-  m_jean_azul: {nombre: "Jean azul recto", linea: mujer, prompt: "classic blue straight-leg jeans", zona: completo, parte: abajo}
-  m_traje_beige: {nombre: "Traje sastre beige", linea: mujer, prompt: "a light sand-beige cream tailored pantsuit", zona: completo, mangas: largas}
-  m_vestido_rojo: {nombre: "Vestido largo rojo de satén", linea: mujer, prompt: "an elegant sleeveless red satin evening dress", zona: vestido}  # con manga larga salían mangas blancas
-  m_vestido_floral: {nombre: "Vestido floral de verano", linea: mujer, prompt: "a modest floral summer dress with short sleeves", zona: vestido}
-  h_terno_azul: {nombre: "Terno azul marino", linea: hombre, prompt: "a navy blue suit with a white dress shirt and tie", zona: completo, mangas: largas}
-  h_blazer_gris: {nombre: "Blazer gris", linea: hombre, prompt: "solid grey blazer", mangas: largas, capa: exterior}
-  h_camisa_celeste: {nombre: "Camisa celeste de vestir", linea: hombre, prompt: "a light blue dress shirt", mangas: largas}
-  h_camisa_blanca: {nombre: "Camisa blanca clásica", linea: hombre, prompt: "a classic white dress shirt", mangas: largas}
-  h_sueter_azul: {nombre: "Suéter azul cuello redondo", linea: hombre, prompt: "solid navy crew-neck sweater", mangas: largas}
-  h_esmoquin: {nombre: "Esmoquin negro", linea: hombre, prompt: "a black tuxedo with a bow tie", zona: completo, mangas: largas}
-  h_terno_gris: {nombre: "Terno gris carbón", linea: hombre, prompt: "a charcoal grey suit with a white shirt", zona: completo, mangas: largas}
-  h_blazer_burdeos: {nombre: "Blazer burdeos", linea: hombre, prompt: "solid burgundy velvet blazer", mangas: largas, capa: exterior}
-  h_casaca_jean: {nombre: "Casaca de jean", linea: hombre, prompt: "solid blue denim jacket", mangas: largas, capa: exterior}
-  h_casaca_cuero: {nombre: "Casaca de cuero marrón", linea: hombre, prompt: "solid brown leather jacket", mangas: largas, capa: exterior}
-  h_camisa_lino: {nombre: "Camisa de lino blanca", linea: hombre, prompt: "a white linen shirt", mangas: largas}
-  h_hoodie_gris: {nombre: "Polerón gris", linea: hombre, prompt: "a grey hoodie", mangas: largas}
-  h_camisa_cuadros: {nombre: "Camisa a cuadros", linea: hombre, prompt: "a red and navy plaid flannel shirt", mangas: largas}
+  # Etiquetas (opcionales) para deducir el estilo del cliente: color, corte (recto, baggy, pitillo, entallado,
+  # holgado, regular) y estilo (formal, office casual, casual, elegante). Ver p2/estilo.py.
+  m_blusa_blanca: {nombre: "Blusa blanca de botones", linea: mujer, prompt: "a crisp white button-up blouse", mangas: largas, lora: vtr_m_blusa_blanca, color: blanco, corte: regular, estilo: office casual}
+  m_pantalon_gris: {nombre: "Pantalón de vestir gris", linea: mujer, prompt: "grey high-waisted dress trousers", zona: completo, parte: abajo, color: gris, corte: recto, estilo: formal}
+  m_pantalon_negro: {nombre: "Pantalón negro de vestir", linea: mujer, prompt: "black tailored dress trousers", zona: completo, parte: abajo, color: negro, corte: recto, estilo: formal}  # neutro: no mezcla color con blusa blanca ni camisa celeste
+  m_jean_azul: {nombre: "Jean azul recto", linea: mujer, prompt: "classic blue straight-leg jeans", zona: completo, parte: abajo, color: azul, corte: recto, estilo: casual}
+  m_traje_beige: {nombre: "Traje sastre beige", linea: mujer, prompt: "a light sand-beige cream tailored pantsuit", zona: completo, mangas: largas, color: beige, corte: entallado, estilo: formal}
+  m_vestido_rojo: {nombre: "Vestido largo rojo de satén", linea: mujer, prompt: "an elegant sleeveless red satin evening dress", zona: vestido, color: rojo, corte: entallado, estilo: elegante}  # con manga larga salían mangas blancas
+  m_vestido_floral: {nombre: "Vestido floral de verano", linea: mujer, prompt: "a modest floral summer dress with short sleeves", zona: vestido, color: multicolor, corte: holgado, estilo: casual}
+  m_camisa_celeste: {nombre: "Camisa celeste", linea: mujer, prompt: "a light blue button-up shirt", mangas: largas, lora: vtr_m_camisa_celeste, color: celeste, corte: regular, estilo: office casual}
+  # Nuevas (variedad de cortes; aún sin validar con los modelos reales)
+  m_pantalon_ancho: {nombre: "Pantalón ancho beige", linea: mujer, prompt: "beige high-waisted wide-leg palazzo trousers", zona: completo, parte: abajo, color: beige, corte: baggy, estilo: office casual}
+  m_jean_pitillo: {nombre: "Jean pitillo negro", linea: mujer, prompt: "black skinny jeans", zona: completo, parte: abajo, color: negro, corte: pitillo, estilo: casual}
+  m_jean_baggy: {nombre: "Jean baggy celeste", linea: mujer, prompt: "light blue baggy loose-fit wide-leg jeans", zona: completo, parte: abajo, color: celeste, corte: baggy, estilo: casual}
+  m_pantalon_pitillo: {nombre: "Pantalón pitillo gris", linea: mujer, prompt: "grey skinny cigarette dress pants", zona: completo, parte: abajo, color: gris, corte: pitillo, estilo: office casual}
+  m_polo_negro: {nombre: "Polo negro entallado", linea: mujer, prompt: "a plain black fitted t-shirt", color: negro, corte: entallado, estilo: casual}
+  m_sueter_verde: {nombre: "Suéter verde holgado", linea: mujer, prompt: "a solid olive green oversized knit sweater", mangas: largas, color: verde, corte: holgado, estilo: casual}
+  h_terno_azul: {nombre: "Terno azul marino", linea: hombre, prompt: "a navy blue suit with a white dress shirt and tie", zona: completo, mangas: largas, color: azul, corte: entallado, estilo: formal}
+  h_blazer_gris: {nombre: "Blazer gris", linea: hombre, prompt: "solid grey blazer", mangas: largas, capa: exterior, color: gris, corte: entallado, estilo: office casual}
+  h_camisa_celeste: {nombre: "Camisa celeste de vestir", linea: hombre, prompt: "a light blue dress shirt", mangas: largas, color: celeste, corte: regular, estilo: office casual}
+  h_camisa_blanca: {nombre: "Camisa blanca clásica", linea: hombre, prompt: "a classic white dress shirt", mangas: largas, color: blanco, corte: regular, estilo: formal}
+  h_sueter_azul: {nombre: "Suéter azul cuello redondo", linea: hombre, prompt: "solid navy crew-neck sweater", mangas: largas, color: azul, corte: regular, estilo: office casual}
+  h_esmoquin: {nombre: "Esmoquin negro", linea: hombre, prompt: "a black tuxedo with a bow tie", zona: completo, mangas: largas, color: negro, corte: entallado, estilo: elegante}
+  h_terno_gris: {nombre: "Terno gris carbón", linea: hombre, prompt: "a charcoal grey suit with a white shirt", zona: completo, mangas: largas, color: gris, corte: entallado, estilo: formal}
+  h_blazer_burdeos: {nombre: "Blazer burdeos", linea: hombre, prompt: "solid burgundy velvet blazer", mangas: largas, capa: exterior, color: burdeos, corte: entallado, estilo: elegante}
+  h_casaca_jean: {nombre: "Casaca de jean", linea: hombre, prompt: "solid blue denim jacket", mangas: largas, capa: exterior, color: azul, corte: regular, estilo: casual}
+  h_casaca_cuero: {nombre: "Casaca de cuero marrón", linea: hombre, prompt: "solid brown leather jacket", mangas: largas, capa: exterior, color: marron, corte: regular, estilo: casual}
+  h_camisa_lino: {nombre: "Camisa de lino blanca", linea: hombre, prompt: "a white linen shirt", mangas: largas, color: blanco, corte: holgado, estilo: casual}
+  h_hoodie_gris: {nombre: "Polerón gris", linea: hombre, prompt: "a grey hoodie", mangas: largas, color: gris, corte: holgado, estilo: casual}
+  h_camisa_cuadros: {nombre: "Camisa a cuadros", linea: hombre, prompt: "a red and navy plaid flannel shirt", mangas: largas, color: rojo, corte: regular, estilo: casual}
 
-  h_cuello_alto: {nombre: "Suéter de cuello alto negro", linea: hombre, prompt: "a black turtleneck sweater", mangas: largas}
-  h_camisa_oxford: {nombre: "Camisa oxford blanca", linea: hombre, prompt: "a white oxford button-down shirt", mangas: largas}
-  h_bomber: {nombre: "Casaca bomber verde", linea: hombre, prompt: "solid olive green bomber jacket", mangas: largas}
-  h_sueter_verde: {nombre: "Suéter verde cuello en V", linea: hombre, prompt: "solid forest green v-neck sweater", mangas: largas}
-  h_camisa_denim: {nombre: "Camisa denim", linea: hombre, prompt: "a light blue denim button-up shirt", mangas: largas}
-  h_blazer_azul: {nombre: "Blazer azul marino", linea: hombre, prompt: "solid navy blue blazer", mangas: largas}
-  h_camiseta_gris: {nombre: "Camiseta gris básica", linea: hombre, prompt: "a plain heather grey t-shirt"}
-  h_terno_beige: {nombre: "Terno de lino beige", linea: hombre, prompt: "a beige linen suit with a white shirt", zona: completo, mangas: largas}
-  m_camisa_celeste: {nombre: "Camisa celeste", linea: mujer, prompt: "a light blue button-up shirt", mangas: largas, lora: vtr_m_camisa_celeste}
-  h_pantalon_gris: {nombre: "Pantalón de vestir gris", linea: hombre, prompt: "grey tailored dress trousers", zona: completo, parte: abajo}
-  h_chino_beige: {nombre: "Pantalón chino beige", linea: hombre, prompt: "beige chino trousers", zona: completo, parte: abajo}
-  h_short_chino: {nombre: "Short chino azul marino", linea: hombre, prompt: "solid dark navy blue chino shorts above the knee", zona: completo, parte: abajo, piernas: true}  # solo si la foto muestra piernas
-  h_jean_oscuro: {nombre: "Jean azul oscuro", linea: hombre, prompt: "dark blue slim jeans", zona: completo, parte: abajo}
+  h_cuello_alto: {nombre: "Suéter de cuello alto negro", linea: hombre, prompt: "a black turtleneck sweater", mangas: largas, color: negro, corte: entallado, estilo: elegante}
+  h_camisa_oxford: {nombre: "Camisa oxford blanca", linea: hombre, prompt: "a white oxford button-down shirt", mangas: largas, color: blanco, corte: regular, estilo: office casual}
+  h_bomber: {nombre: "Casaca bomber verde", linea: hombre, prompt: "solid olive green bomber jacket", mangas: largas, color: verde, corte: regular, estilo: casual}
+  h_sueter_verde: {nombre: "Suéter verde cuello en V", linea: hombre, prompt: "solid forest green v-neck sweater", mangas: largas, color: verde, corte: regular, estilo: office casual}
+  h_camisa_denim: {nombre: "Camisa denim", linea: hombre, prompt: "a light blue denim button-up shirt", mangas: largas, color: celeste, corte: regular, estilo: casual}
+  h_blazer_azul: {nombre: "Blazer azul marino", linea: hombre, prompt: "solid navy blue blazer", mangas: largas, color: azul, corte: entallado, estilo: office casual}
+  h_camiseta_gris: {nombre: "Camiseta gris básica", linea: hombre, prompt: "a plain heather grey t-shirt", color: gris, corte: regular, estilo: casual}
+  h_terno_beige: {nombre: "Terno de lino beige", linea: hombre, prompt: "a beige linen suit with a white shirt", zona: completo, mangas: largas, color: beige, corte: regular, estilo: formal}
+  h_pantalon_gris: {nombre: "Pantalón de vestir gris", linea: hombre, prompt: "grey tailored dress trousers", zona: completo, parte: abajo, color: gris, corte: recto, estilo: formal}
+  h_chino_beige: {nombre: "Pantalón chino beige", linea: hombre, prompt: "beige chino trousers", zona: completo, parte: abajo, color: beige, corte: recto, estilo: office casual}
+  h_short_chino: {nombre: "Short chino azul marino", linea: hombre, prompt: "solid dark navy blue chino shorts above the knee", zona: completo, parte: abajo, piernas: true, color: azul, corte: regular, estilo: casual}  # solo si la foto muestra piernas
+  h_jean_oscuro: {nombre: "Jean azul oscuro", linea: hombre, prompt: "dark blue slim jeans", zona: completo, parte: abajo, color: azul, corte: pitillo, estilo: casual}
+  # Nuevas (variedad de cortes; aún sin validar con los modelos reales)
+  h_jean_recto: {nombre: "Jean azul recto", linea: hombre, prompt: "medium blue classic straight-leg jeans", zona: completo, parte: abajo, color: azul, corte: recto, estilo: casual}
+  h_jean_baggy: {nombre: "Jean baggy celeste", linea: hombre, prompt: "light blue baggy loose-fit wide-leg jeans", zona: completo, parte: abajo, color: celeste, corte: baggy, estilo: casual}
+  h_pantalon_baggy: {nombre: "Pantalón ancho gris carbón", linea: hombre, prompt: "charcoal grey pleated wide-leg baggy trousers", zona: completo, parte: abajo, color: gris, corte: baggy, estilo: office casual}
+  h_pantalon_pitillo: {nombre: "Pantalón pitillo negro", linea: hombre, prompt: "black skinny slim-fit dress pants", zona: completo, parte: abajo, color: negro, corte: pitillo, estilo: office casual}
   # Accesorios (tipo: accesorio): segunda pasada de inpainting solo en su zona (lentes, collar). Aretes y calzado se probaron y se retiraron.
   m_lentes_negros: {nombre: "Lentes negros rectangulares", linea: mujer, tipo: accesorio, zona: lentes, prompt: "thin black rectangular eyeglasses with clear lenses"}
   m_lentes_carey: {nombre: "Lentes de carey marrón redondos", linea: mujer, tipo: accesorio, zona: lentes, prompt: "thick brown tortoiseshell round eyeglasses with clear lenses", negativo: "thin frames, silver, metal"}
@@ -194,25 +208,54 @@ catalogo:
   h_lentes_negros: {nombre: "Lentes negros rectangulares", linea: hombre, tipo: accesorio, zona: lentes, prompt: "thin black rectangular eyeglasses with clear lenses"}
   h_lentes_carey: {nombre: "Lentes de carey marrón", linea: hombre, tipo: accesorio, zona: lentes, prompt: "thick brown tortoiseshell square eyeglasses with clear lenses", negativo: "thin frames, silver, metal"}
   h_lentes_metal: {nombre: "Lentes de metal plateado", linea: hombre, tipo: accesorio, zona: lentes, prompt: "thin silver metal round eyeglasses with clear lenses"}
-# Ocasiones: 7 a 10 looks por línea (solo prendas validadas con modelos reales). Modo prueba: los 5 primeros (reproducible); producción: 5 al azar. Una nueva
-# ronda sustituye cada look rechazado por otro de la ocasión aún no mostrado.
+# Ocasiones: 7 a 10 looks por línea. Los 5 primeros mezclan a propósito cortes (recto, baggy, pitillo) y colores: la
+# ronda 1 explora y da información para deducir el estilo. Modo prueba: los 5 primeros (reproducible); producción: 5
+# variados al azar (p2/vitrina._variados). Una nueva ronda sustituye cada look rechazado por otro aún no mostrado.
 ocasiones:
   trabajo:
-    nombre: Trabajo
-    mujer: [[m_blusa_blanca, m_pantalon_gris], [m_traje_beige, m_lentes_negros], [m_camisa_celeste, m_pantalon_negro], [m_blusa_blanca, m_pantalon_negro, m_collar_perlas], [m_camisa_celeste, m_jean_azul], [m_blusa_blanca, m_pantalon_gris, m_lentes_carey], [m_camisa_celeste, m_jean_azul, m_collar_dorado]]
-    hombre: [[h_terno_azul], [h_camisa_celeste, h_pantalon_gris], [h_sueter_azul, h_pantalon_gris, h_lentes_negros], [h_blazer_gris, h_pantalon_gris], [h_camisa_blanca, h_chino_beige], [h_terno_gris], [h_camisa_oxford, h_pantalon_gris], [h_blazer_azul, h_chino_beige], [h_sueter_verde, h_chino_beige]]
+    nombre: Trabajo (office casual)
+    mujer: [[m_blusa_blanca, m_pantalon_gris], [m_camisa_celeste, m_pantalon_ancho], [m_blusa_blanca, m_pantalon_pitillo, m_lentes_negros], [m_traje_beige], [m_camisa_celeste, m_pantalon_negro, m_collar_perlas], [m_camisa_celeste, m_jean_azul], [m_blusa_blanca, m_pantalon_ancho, m_lentes_carey], [m_sueter_verde, m_pantalon_negro], [m_polo_negro, m_pantalon_gris], [m_camisa_celeste, m_jean_azul, m_collar_dorado]]
+    hombre: [[h_camisa_celeste, h_pantalon_gris], [h_blazer_azul, h_pantalon_baggy], [h_sueter_azul, h_pantalon_pitillo, h_lentes_negros], [h_terno_azul], [h_camisa_oxford, h_chino_beige], [h_blazer_gris, h_pantalon_gris], [h_terno_gris], [h_camisa_blanca, h_pantalon_baggy], [h_sueter_verde, h_chino_beige], [h_camisa_celeste, h_pantalon_pitillo]]
   reunion:
     nombre: Reunión
-    mujer: [[m_traje_beige], [m_blusa_blanca, m_pantalon_gris, m_lentes_negros], [m_camisa_celeste, m_pantalon_negro], [m_blusa_blanca, m_pantalon_negro, m_collar_perlas], [m_camisa_celeste, m_jean_azul], [m_camisa_celeste, m_pantalon_negro, m_lentes_dorados], [m_blusa_blanca, m_pantalon_gris, m_collar_dorado]]
-    hombre: [[h_terno_gris], [h_blazer_gris, h_pantalon_gris], [h_camisa_blanca, h_pantalon_gris, h_lentes_carey], [h_sueter_azul, h_chino_beige], [h_terno_azul], [h_camisa_celeste, h_chino_beige], [h_blazer_burdeos, h_pantalon_gris], [h_blazer_azul, h_pantalon_gris], [h_terno_beige]]
+    mujer: [[m_traje_beige], [m_blusa_blanca, m_pantalon_gris, m_lentes_negros], [m_camisa_celeste, m_pantalon_ancho], [m_blusa_blanca, m_pantalon_pitillo, m_collar_perlas], [m_camisa_celeste, m_jean_azul], [m_camisa_celeste, m_pantalon_negro, m_lentes_dorados], [m_blusa_blanca, m_pantalon_gris, m_collar_dorado], [m_blusa_blanca, m_pantalon_ancho], [m_sueter_verde, m_pantalon_negro]]
+    hombre: [[h_terno_gris], [h_blazer_gris, h_pantalon_baggy], [h_camisa_blanca, h_pantalon_gris, h_lentes_carey], [h_sueter_azul, h_pantalon_pitillo], [h_camisa_celeste, h_chino_beige], [h_terno_azul], [h_blazer_burdeos, h_pantalon_gris], [h_blazer_azul, h_pantalon_gris], [h_terno_beige], [h_camisa_oxford, h_pantalon_baggy]]
   evento:
     nombre: Evento
-    mujer: [[m_vestido_rojo], [m_traje_beige, m_lentes_negros], [m_vestido_floral], [m_blusa_blanca, m_pantalon_gris, m_collar_perlas], [m_camisa_celeste, m_pantalon_negro], [m_blusa_blanca, m_pantalon_negro], [m_camisa_celeste, m_jean_azul], [m_blusa_blanca, m_pantalon_gris, m_lentes_carey], [m_camisa_celeste, m_pantalon_negro, m_collar_dorado]]
-    hombre: [[h_esmoquin], [h_blazer_burdeos, h_pantalon_gris], [h_terno_azul, h_lentes_metal], [h_terno_gris], [h_blazer_gris, h_pantalon_gris], [h_camisa_blanca, h_pantalon_gris], [h_terno_beige], [h_blazer_azul, h_chino_beige]]
+    mujer: [[m_vestido_rojo], [m_traje_beige, m_lentes_negros], [m_blusa_blanca, m_pantalon_ancho], [m_polo_negro, m_pantalon_pitillo, m_collar_perlas], [m_camisa_celeste, m_pantalon_negro], [m_vestido_floral], [m_blusa_blanca, m_pantalon_negro], [m_camisa_celeste, m_jean_azul], [m_blusa_blanca, m_pantalon_gris, m_lentes_carey], [m_camisa_celeste, m_pantalon_negro, m_collar_dorado]]
+    hombre: [[h_esmoquin], [h_blazer_burdeos, h_pantalon_baggy], [h_terno_azul, h_lentes_metal], [h_cuello_alto, h_pantalon_pitillo], [h_blazer_gris, h_pantalon_gris], [h_terno_gris], [h_camisa_blanca, h_pantalon_gris], [h_terno_beige], [h_blazer_azul, h_chino_beige]]
   casual:
     nombre: Casual
-    mujer: [[m_blusa_blanca, m_pantalon_negro], [m_vestido_floral], [m_camisa_celeste, m_jean_azul], [m_camisa_celeste, m_pantalon_negro, m_collar_perlas], [m_blusa_blanca, m_pantalon_gris], [m_blusa_blanca, m_pantalon_negro, m_lentes_dorados], [m_camisa_celeste, m_jean_azul, m_collar_dorado]]
-    hombre: [[h_camisa_lino, h_short_chino], [h_camisa_cuadros, h_short_chino], [h_casaca_jean, h_jean_oscuro, h_lentes_negros], [h_casaca_cuero, h_jean_oscuro], [h_hoodie_gris, h_jean_oscuro], [h_camisa_cuadros, h_jean_oscuro], [h_camisa_lino, h_chino_beige], [h_bomber, h_jean_oscuro], [h_camisa_denim, h_chino_beige], [h_sueter_verde, h_jean_oscuro]]
+    mujer: [[m_blusa_blanca, m_jean_azul], [m_sueter_verde, m_jean_baggy], [m_polo_negro, m_jean_pitillo, m_lentes_dorados], [m_vestido_floral], [m_camisa_celeste, m_pantalon_ancho, m_collar_dorado], [m_camisa_celeste, m_jean_azul], [m_blusa_blanca, m_jean_baggy], [m_camisa_celeste, m_jean_pitillo, m_collar_perlas], [m_blusa_blanca, m_pantalon_negro]]
+    hombre: [[h_camisa_lino, h_short_chino], [h_hoodie_gris, h_jean_baggy], [h_casaca_jean, h_jean_oscuro, h_lentes_negros], [h_casaca_cuero, h_jean_recto], [h_camiseta_gris, h_chino_beige], [h_camisa_cuadros, h_jean_oscuro], [h_camisa_lino, h_chino_beige], [h_bomber, h_jean_baggy], [h_camisa_denim, h_jean_recto], [h_sueter_verde, h_jean_oscuro], [h_camisa_cuadros, h_short_chino]]
+
+# Perfil de estilo (p2/estilo.py). «en»: valor en inglés para ajustar un look cuando no quedan candidatos.
+# «sinonimos»: raíces (sin tildes) con las que se reconoce un valor dentro del motivo escrito por el cliente.
+estilo:
+  en: {recto: straight-leg, baggy: baggy wide-leg, pitillo: skinny, entallado: slim tailored, holgado: loose relaxed, regular: regular,
+       negro: black, blanco: white, gris: grey, azul: navy blue, celeste: light blue, beige: beige, rojo: red, verde: olive green,
+       marron: brown, burdeos: burgundy, multicolor: colorful}
+  sinonimos:
+    recto: [recto, rectos, recta, straight]
+    baggy: [baggy, ancho, anchos, ancha, wide, palazzo]
+    pitillo: [pitillo, skinny, ceñid, chupin, ajustad]
+    entallado: [entallad, slim]
+    holgado: [holgad, oversize, suelt]
+    negro: [negr]
+    blanco: [blanc]
+    gris: [gris]
+    azul: [azul, marino]
+    celeste: [celeste]
+    beige: [beige, crema, camel]
+    rojo: [roj]
+    verde: [verde]
+    marron: [marron]
+    burdeos: [burdeo, vino]
+    multicolor: [flore, estampad, colorid]
+    formal: [formal]
+    office casual: [office, oficina, trabajo]
+    casual: [casual, informal, relajad]
+    elegante: [elegant, gala, fiesta]
 
 # Instrucción escrita: la misma prenda en 5 variantes, para que las cinco opciones sean distintas.
 instruction_variants: ["", "in a neutral color palette", "in a bold color palette", "with a relaxed fit", "with a tailored fit"]
