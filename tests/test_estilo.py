@@ -41,6 +41,14 @@ def test_every_garment_is_tagged_and_first_round_mixes_cuts(vcfg):
             assert len(cortes) >= 2, (occ["nombre"], linea, cortes)  # ronda 1: al menos dos cortes de pantalón
 
 
+def test_catalog_accessories_go_with_clothes(vcfg):
+    from p2.guardrails import GuardrailError
+    with pytest.raises(GuardrailError, match="al menos una prenda de ropa"):
+        vitrina.looks_for(vcfg, {"mode": "catalogo", "items": ["h_lentes_metal"]})
+    looks, _ = vitrina.looks_for(vcfg, {"mode": "catalogo", "items": ["h_lentes_metal", "h_blazer_gris", "h_jean_recto"]})
+    assert all(lk["accessories"] == ["h_lentes_metal"] and lk["items"] for lk in looks)
+
+
 def test_deterministic_profile_cites_evidence(ses, vcfg):
     store, _, sid = ses
     p = estilo.perfil(store.load(sid), vcfg)

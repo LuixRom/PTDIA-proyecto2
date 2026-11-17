@@ -145,7 +145,12 @@ def looks_for(cfg, opts, rng=None):
         items = list(dict.fromkeys(opts.get("items") or []))
         if not 1 <= len(items) <= 5:
             raise GuardrailError("Elige entre 1 y 5 prendas del catálogo.")
-        return [_look(cfg, [items[k % len(items)]]) for k in range(5)], []  # menos de 5: se repiten con otra semilla
+        # los accesorios acompañan a la ropa: solos daban 5 copias de la foto sin cambios
+        accs = [i for i in items if is_accessory(cfg, i)]
+        ropa = [i for i in items if i not in accs]
+        if not ropa:
+            raise GuardrailError("Elige al menos una prenda de ropa: los lentes y collares se agregan a cada look.")
+        return [_look(cfg, [ropa[k % len(ropa)]] + accs) for k in range(5)], []  # menos de 5: se repiten con otra semilla
     if mode == "instruccion":
         es, en = opts["instruction"], opts["instruction_en"]
         return [{"name": f"{es} ({VARIANT_NAMES[k]})", "items": [],

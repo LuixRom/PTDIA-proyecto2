@@ -13,9 +13,12 @@ guardan fuera del repositorio, en C:\\PTDIA\\sesiones_local (bórrelas al termin
 import gc
 import os
 import sys
+import warnings
 from pathlib import Path
 
 os.environ.setdefault("HF_HUB_OFFLINE", "1")
+# aviso interno de gradio 6.15.2 con starlette nueva (nombre de una constante HTTP); no afecta a la app
+warnings.filterwarnings("ignore", message=".*HTTP_422_UNPROCESSABLE_ENTITY.*")
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
