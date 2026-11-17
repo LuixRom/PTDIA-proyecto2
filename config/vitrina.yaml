@@ -47,7 +47,7 @@ approaches:
     strength: null
     steps: null
     composite: true
-    api: {model: gpt-image-2, size: "1024x1536"}   # modelos disponibles: ver tools/probar_api_gpt.py
+    api: {model: gpt-image-2, size: "1024x1536"}   # size: fotos verticales; las cuadradas piden 1024x1024 (api_images.size_for)
   B:
     name: "Intermedio · segmentación + inpainting + ControlNet"
     description: "Detecta tu ropa y regenera solo esa zona (ControlNet sigue los bordes del cuerpo). Rostro, cabello, manos y fondo quedan idénticos a tu foto; los brazos solo cambian si la prenda es de manga larga."

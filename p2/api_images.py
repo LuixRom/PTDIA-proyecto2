@@ -88,6 +88,15 @@ def prompt_look(texto):
             "Photorealistic, natural lighting. Do not add text or logos, and no accessories other than those mentioned.")
 
 
+def size_for(img, vertical="1024x1536"):
+    """Tamaño de salida con la misma orientación que la foto. Antes se pedía siempre 1024x1536: con una foto cuadrada
+    (512x512) la respuesta se deformaba al volver a su tamaño y el rostro original pegado encima quedaba desalineado."""
+    w, h = img.size
+    if h > 1.2 * w:
+        return vertical
+    return "1536x1024" if w > 1.2 * h else "1024x1024"
+
+
 class ApiEditor:
     """engine.api(img, texto_del_look) -> (imagen PIL del tamaño recibido, uso informado por la API)."""
 
@@ -101,7 +110,7 @@ class ApiEditor:
         from PIL import Image
         buf = io.BytesIO()
         img.convert("RGB").save(buf, "PNG")
-        r = editar(self.clave, self.model, buf.getvalue(), prompt_look(texto), self.size)
+        r = editar(self.clave, self.model, buf.getvalue(), prompt_look(texto), size_for(img, self.size))
         try:
             d = r["data"][0]
             datos = base64.b64decode(d["b64_json"]) if d.get("b64_json") else urllib.request.urlopen(d["url"]).read()
