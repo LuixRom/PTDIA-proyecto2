@@ -237,11 +237,16 @@ def elegir(cfg, linea, ocasion, quiero, no_quiero, mostrados, n, has_pants=False
     for items, en_ocasion in candidatos(cfg, linea, ocasion, has_pants):
         lk = _look(cfg, items)
         tags = set(etiquetas(cfg, items))
-        if lk["name"] in mostrados or tags & no_quiero:
+        # ya mostrado: por nombre o por la misma ropa (el mismo traje con otros lentes no es un look nuevo)
+        if lk["name"] in mostrados or tuple(sorted(lk["items"])) in mostrados or tags & no_quiero:
             continue
         pool.append((len(tags & quiero), en_ocasion, rng.random() if rng else 0.0, lk, sorted(tags & quiero)))
     pool.sort(key=lambda x: (-x[0], not x[1], x[2]))
-    out = [(lk, por_que(c)) for _, _, _, lk, c in pool[:n]]
+    out, ropa = [], set()
+    for _, _, _, lk, c in pool:
+        if len(out) < n and tuple(sorted(lk["items"])) not in ropa:  # tampoco dos looks nuevos con la misma ropa
+            ropa.add(tuple(sorted(lk["items"])))
+            out.append((lk, por_que(c)))
     if len(out) < n:
         out += _ajustados(cfg, linea, ocasion, quiero, no_quiero, n - len(out), has_pants)
     return out

@@ -10,7 +10,7 @@ from pathlib import Path
 
 from . import __version__
 from . import config as cfgmod
-from . import sus, vitrina
+from . import estilo, sus, vitrina
 from .decisions import DecisionStore
 from .guardrails import GuardrailError
 from . import vitrina_theme as vt
@@ -82,7 +82,8 @@ def _cards(store, sid, captions_only=False):
             aviso = "Bloqueada por el filtro de contenido."
         elif v.metrics.get("identity_ok") is False:
             aviso = "El rostro cambió: no se conservó tu identidad."
-        out.append(vt.look_card(k, v.id, v.attribute, v.round, store.root / sid / v.image_file, aviso))
+        out.append(vt.look_card(k, v.id, v.attribute, v.round, store.root / sid / v.image_file, aviso,
+                                v.metrics.get("por_que", "")))
     return out
 
 
@@ -109,7 +110,7 @@ def build_ui(store, cfg, engine, llms, db=None):
                 gr.HTML("<p class='nota'>De frente, solo tú, con los brazos relajados a los costados y sin marcas de agua.</p>")
                 own = gr.Checkbox(label="La foto es mía (o tengo permiso de la persona)")
                 adult = gr.Checkbox(label="Soy mayor de edad")
-                alias = gr.Textbox(label="Alias (opcional, no uses tu nombre real)", max_lines=1)
+                alias = gr.Textbox(label="Nombre del participante (para el registro de pruebas)", max_lines=1)
             with gr.Column(scale=6):
                 gr.HTML(vt.sec(2, "Elige qué probarte"))
                 # sin valor por defecto: el cliente elige la línea (no se adivina el género a partir de la foto)
@@ -153,6 +154,20 @@ def build_ui(store, cfg, engine, llms, db=None):
             summ = gr.Button("Explicar mi elección", variant="primary")
         status = gr.Markdown()
         summary_md = gr.Markdown()
+
+        gr.HTML(vt.sec(4, "Tu estilo"))
+        gr.HTML("<p class='nota'>Después de decidir, deduce tu estilo de lo que aceptaste, rechazaste y escribiste. "
+                "Corrige «Quiero» y «No quiero» si hace falta y pide una ronda que lo tenga en cuenta.</p>")
+        estilo_btn = gr.Button("Deducir mi estilo")
+        estilo_md = gr.Markdown()
+        with gr.Row():
+            quiero_cb = gr.CheckboxGroup([], label="Quiero")
+            no_quiero_cb = gr.CheckboxGroup([], label="No quiero")
+        with gr.Row():
+            alcance = gr.Radio([("Solo las rechazadas", "rechazadas"), ("Las 5", "todas")], value="rechazadas",
+                               label="Qué regenerar")
+            estilo_go = gr.Button("Nueva ronda con mi estilo", variant="primary")
+        deducido = gr.State(None)
 
         with gr.Tabs():
             with gr.Tab("Mis looks"):
@@ -297,7 +312,9 @@ def build_ui(store, cfg, engine, llms, db=None):
             res = vitrina.summarize(store, s, fn, label, db)
             badge = "verificado contra tu registro" if res.verified else "NO verificado: " + "; ".join(res.errors)
             origin = "plantilla de respaldo (el modelo no superó la verificación)" if res.fallback else label
-            return (f"**Tu elección explicada** ({origin}, {badge})\n\n{res.summary.resumen}",
+            por = [f"- {v.id}: {v.metrics['por_que']}" for v in store.load(s).variations if v.metrics.get("por_que")]
+            extra = ("\n\n**Por qué se eligieron los looks nuevos**\n" + "\n".join(por)) if por else ""
+            return (f"**Tu elección explicada** ({origin}, {badge})\n\n{res.summary.resumen}{extra}",
                     "Decisiones registradas.", *side_panels(s))
 
         summ.click(_summ, [sid, llm, *radios, *reasons], [summary_md, status, *side_out])
@@ -309,6 +326,41 @@ def build_ui(store, cfg, engine, llms, db=None):
             return full_refresh(s, f"Se restauró la configuración de la ronda {r} (mismos looks y semillas).")
 
         restore_btn.click(_restore, [sid, restore_round], full_out)
+
+        def _deducir(s, llm_v, *vals):
+            _submit(s, vals)
+            fn, label = llms.get(llm_names[llm_v])
+            res = vitrina.deducir_estilo(store, s, cfg, fn, label)
+            q, n = [p["valor"] for p in res["quiero"]], [p["valor"] for p in res["no_quiero"]]
+            origen = (f"deducido con {label}; cada preferencia verificada contra tus decisiones y motivos"
+                      if res["fuente"] == "llm" else "perfil determinista (solo tus decisiones; el LLM no superó la verificación)")
+            choices = estilo.vocabulario(cfg, store.load(s).options.get("linea"))
+            return (f"**Tu estilo** ({origen})\n\n{res['explicacion']}",
+                    gr.update(choices=choices, value=q), gr.update(choices=choices, value=n),
+                    {"quiero": q, "no_quiero": n}, "Estilo deducido: revisa «Quiero» y «No quiero».", *side_panels(s))
+
+        estilo_btn.click(_deducir, [sid, llm, *radios, *reasons],
+                         [estilo_md, quiero_cb, no_quiero_cb, deducido, status, *side_out])
+
+        def _estilo_ronda(s, alc, q, n, ded, *vals):
+            _submit(s, vals)
+            if ded is None and not q and not n:  # no pidió «Deducir»: se usa el perfil determinista
+                p = estilo.perfil(store.load(s), cfg)
+                q, n = [x["valor"] for x in p["quiero"]], [x["valor"] for x in p["no_quiero"]]
+                ded = {"quiero": q, "no_quiero": n}
+            q = [x for x in (q or []) if x not in (n or [])]  # si marcó lo mismo en los dos lados, manda «No quiero»
+            try:
+                why = vitrina.ronda_con_estilo(store, engine, s, q, n or [], alc == "todas", ded)
+            except (GuardrailError, ValueError) as e:
+                raise gr.Error(str(e))
+            st = store.load(s)
+            lineas = "\n".join(f"- **{v} · {st.by_id(v).attribute}**: {w}" for v, w in why.items())
+            return full_refresh(s, f"Nueva ronda con tu estilo (Quiero: {', '.join(q) or '—'}; "
+                                   f"No quiero: {', '.join(n or []) or '—'}):\n{lineas}")
+
+        estilo_go.click(None, None, None, js=_mide_on)
+        estilo_go.click(_estilo_ronda, [sid, alcance, quiero_cb, no_quiero_cb, deducido, *radios, *reasons],
+                        full_out).then(None, None, None, js=_mide_off)
 
         def _save(s, *vals):
             if s is None:

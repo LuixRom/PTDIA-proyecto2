@@ -289,10 +289,12 @@ def empty_card(k):
             f"<div class='look-photo'><b>{k}</b></div><figcaption>Tu look {k} aparecerá aquí.</figcaption></figure>")
 
 
-def look_card(i, vid, nombre, ronda, img_path, aviso=""):
-    """Un look colgado de su tramo de cinta. i = posición (0-4), solo para escalonar la entrada."""
+def look_card(i, vid, nombre, ronda, img_path, aviso="", por_que=""):
+    """Un look colgado de su tramo de cinta. i = posición (0-4), solo para escalonar la entrada.
+    por_que: motivo de la elección en una ronda con estilo («porque prefieres corte recto»)."""
     b64 = base64.b64encode(Path(img_path).read_bytes()).decode("ascii")
     warn = f"<div class='look-warn'>{html.escape(aviso)}</div>" if aviso else ""
+    warn += f"<div class='nota'>Elegido {html.escape(por_que)}</div>" if por_que else ""
     return (f"<figure class='look' style='--i:{i}'><div class='look-tape'><b>{html.escape(vid)}</b>"
             f"<span class='ronda'>ronda {ronda}</span><span class='est est-ok'>Aceptado</span>"
             f"<span class='est est-no'>Descartado</span></div><div class='look-photo'>"

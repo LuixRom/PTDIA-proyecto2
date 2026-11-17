@@ -514,10 +514,16 @@ def _reload(store, sid, engine):
     s = store.load(sid)
     d = _sdir(store, sid)
     img = Image.open(d / "input.png").convert("RGB")
-    ctx = {"masks": {p.stem[len("mask_"):]: Image.open(p).convert("L") for p in d.glob("mask_*.png")},
-           "face_box": tuple(s.options["face_box"]) if s.options.get("face_box") else None,
-           "control": Image.open(d / "control.png").convert("RGB") if (d / "control.png").exists() else None}
-    return s, d, img, ctx
+    # Contexto completo otra vez (segmentación y pose son deterministas): antes solo se leían las máscaras guardadas y
+    # faltaban keep_mask (la API fallaba en nuevas rondas), las zonas de accesorios y el fondo limpio.
+    return s, d, img, _context(engine, img, s.options.get("approach"))
+
+
+def _archivar(s, ids):
+    """Guarda en la sesión los looks decididos que se van a reemplazar: el perfil de estilo los sigue contando."""
+    s.options["decididos"] = s.options.get("decididos", []) + [
+        {"id": v.id, "ronda": v.round, "look": v.attribute, "items": v.items, "decision": v.decision,
+         "motivo": v.reason, "reemplazada_en": s.round + 1} for v in s.variations if v.id in ids and v.decision]
 
 
 def new_round(store, engine, sid):
@@ -543,6 +549,7 @@ def new_round(store, engine, sid):
     new = _variations(results, s.options["approach"], r, _gen_params(cfg, s.options["approach"]))
     for vid, (spec, _, _) in results.items():
         new[vid].metrics["look_text"] = spec["look_text"]
+    _archivar(s, rejected)
     s.variations = [new.get(v.id, v) for v in s.variations]
     s.round = r
     s.options["alternates"] = alternates
@@ -570,6 +577,7 @@ def restore(store, engine, sid, from_round):
     new = _variations(results, approach, r, _gen_params(cfg, approach))
     for vid, (spec, _, _) in results.items():
         new[vid].metrics["look_text"] = spec["look_text"]
+    _archivar(s, list(new))
     s.variations = [new[f"V{k}"] for k in range(1, 6)]
     s.round = r
     store.replace(s, {"type": "restore", "round": r, "from_round": int(from_round)})
@@ -577,6 +585,46 @@ def restore(store, engine, sid, from_round):
                                  "regenerated": list(new), "specs": _snapshot(s), "gen": entry["gen"],
                                  "models": engine.model_ids, "gpu_s": round(gpu_s, 2), "set": set_metrics(engine, d, s)})
     return {vid: str(d / v.image_file) for vid, v in new.items()}
+
+
+def ronda_con_estilo(store, engine, sid, quiero, no_quiero, todas=False, deducido=None):
+    """Nueva ronda guiada por el perfil (Quiero / No quiero, ya editado por el cliente). Regenera las rechazadas
+    (o las 5 si todas=True) con looks de la línea sin nada de «No quiero» y con más coincidencias con «Quiero».
+    Registra el perfil usado (deducido y editado) y por qué se eligió cada look. Devuelve {id: por qué}."""
+    cfg = engine.cfg
+    s, d, img, ctx = _reload(store, sid, engine)
+    if not s.complete():
+        raise ValueError("Decide las 5 variaciones antes de pedir una nueva ronda.")
+    ids = [v.id for v in s.variations] if todas else s.rejected()
+    if not ids:
+        raise ValueError("No hay variaciones rechazadas: elige «Las 5» para regenerar todo con tu estilo.")
+    r = s.round + 1
+    rng = random.SystemRandom()
+    # nombres y ropa (items ya sin accesorios) de todo lo mostrado en la sesión
+    mostrados = s.options.get("used_looks", []) + [v.attribute for v in s.variations] + [
+        tuple(sorted(x.items)) for x in s.variations] + [tuple(sorted(x["items"])) for x in estilo.decididos(s)]
+    elegidos = estilo.elegir(cfg, s.options.get("linea"), s.options.get("occasion"), quiero, no_quiero, mostrados,
+                             len(ids), ctx.get("has_pants", False), None if s.options["seed_mode"] == "prueba" else rng)
+    specs = [make_spec(cfg, s.options["approach"], lk, vid, seed_for(cfg, s.options["seed_mode"], r, int(vid[1:]), rng))
+             for vid, (lk, _) in zip(ids, elegidos)]
+    results, gpu_s = _render(engine, d, img, specs, ctx, r)
+    new = _variations(results, s.options["approach"], r, _gen_params(cfg, s.options["approach"]))
+    razones = {vid: why for vid, (_, why) in zip(ids, elegidos)}
+    for vid, (spec, _, _) in results.items():
+        new[vid].metrics.update(look_text=spec["look_text"], por_que=razones[vid],
+                                etiquetas=estilo.etiquetas(cfg, spec["items"]))
+    _archivar(s, ids)
+    s.variations = [new.get(v.id, v) for v in s.variations]
+    s.round = r
+    usado = {"quiero": sorted(quiero), "no_quiero": sorted(no_quiero), "deducido": deducido, "todas": bool(todas)}
+    s.options["estilo"] = usado
+    s.options["used_looks"] = s.options.get("used_looks", []) + [x["look"] for x in specs]
+    store.replace(s, {"type": "round_estilo", "round": r, "regenerated": ids, **usado})
+    _history_append(store, sid, {"round": r, "kind": "ronda_estilo", "regenerated": ids, "specs": _snapshot(s),
+                                 "gen": _gen_params(cfg, s.options["approach"]), "models": engine.model_ids,
+                                 "gpu_s": round(gpu_s, 2), "set": set_metrics(engine, d, s), "estilo": usado,
+                                 "por_que": razones})
+    return razones
 
 
 def set_metrics(engine, d, s):
