@@ -55,6 +55,16 @@ def stub_llm_loader(entry):
     def fn(prompt):
         if prompt.startswith("Traduce"):
             return prompt.rsplit("Descripción:", 1)[1].strip()
+        if '"valores_permitidos"' in prompt:  # estilo: lee los motivos con la regla simple de p2.estilo.polaridad
+            from .estilo import polaridad
+            datos = json.loads(re.search(r"<datos>\s*(\{.*?\})\s*</datos>", prompt, re.S).group(1))
+            prefs = [{"valor": v, "tipo": t, "look": lk["look"]} for lk in datos["looks"] for v in datos["valores_permitidos"]
+                     if (t := polaridad(lk["motivo"], v, {})) in ("quiero", "no_quiero")]
+            q = datos["perfil_deducido"]["quiero"] + [p["valor"] for p in prefs if p["tipo"] == "quiero"]
+            n = datos["perfil_deducido"]["no_quiero"] + [p["valor"] for p in prefs if p["tipo"] == "no_quiero"]
+            txt = (f"Te gusta: {', '.join(dict.fromkeys(q)) or 'aún no está claro'}. "
+                   f"Evitas: {', '.join(dict.fromkeys(n)) or 'nada en particular'}.")
+            return json.dumps({"preferencias": prefs, "explicacion": txt}, ensure_ascii=False)
         datos = json.loads(re.search(r"<datos>\s*(\[.*?\])\s*</datos>", prompt, re.S).group(1))
         acc = [d["id"] for d in datos if d["decision"] == "aceptada"]
         rej = [d["id"] for d in datos if d["decision"] == "rechazada"]

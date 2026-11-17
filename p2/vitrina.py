@@ -20,7 +20,7 @@ import numpy as np
 from PIL import Image, ImageFilter
 
 from . import guardrails as gr_, api_images
-from . import tryon
+from . import estilo, tryon
 from .explainer import explain, template_summary
 from .guardrails import GuardrailError
 from .preprocess import prepare
@@ -605,6 +605,19 @@ def summarize(store, sid, llm=None, llm_name="plantilla", db=None):
         f.write(json.dumps({"at": now_iso(), "round": s.round, **res.model_dump()}, ensure_ascii=False) + "\n")
     if db is not None:
         db.add_summary(sid, s.participant, res)
+    return res
+
+
+def deducir_estilo(store, sid, cfg, llm=None, llm_name="plantilla"):
+    """Perfil de estilo de la sesión (determinista + lo que el LLM lee de los motivos, verificado). Se guarda en
+    estilos.jsonl (uno por deducción) y como evento «perfil» en events.jsonl."""
+    s = store.load(sid)
+    res = estilo.explicar(s, cfg, llm, llm_name)
+    with open(_sdir(store, sid) / "estilos.jsonl", "a", encoding="utf-8") as f:
+        f.write(json.dumps({"at": now_iso(), "round": s.round, **res}, ensure_ascii=False) + "\n")
+    store.replace(s, {"type": "perfil", "round": s.round, "fuente": res["fuente"], "llm": llm_name,
+                      "quiero": [p["valor"] for p in res["quiero"]],
+                      "no_quiero": [p["valor"] for p in res["no_quiero"]]})
     return res
 
 
