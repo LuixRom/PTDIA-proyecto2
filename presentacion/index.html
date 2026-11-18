@@ -1,0 +1,380 @@
+<!doctype html>
+<html lang="es">
+<head
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vitrina IA · Presentación</title>
+<style>
+@font-face{font-family:'Big Shoulders Display';src:url(fonts/BigShouldersDisplay-latin.woff2) format('woff2');font-weight:100 900;font-display:swap}
+@font-face{font-family:'Hanken Grotesk';src:url(fonts/HankenGrotesk-latin.woff2) format('woff2');font-weight:100 900;font-display:swap}
+:root{
+  --ink:#15191C; --ink2:#1E2429; --paper:#F7F8F6; --cinta:#EFC21B; --acero:#9AA6AD; --linea:#323B42;
+  --rechazo:#F08A74; --ok:#7FD6A2;
+  --display:'Big Shoulders Display','Arial Narrow',sans-serif; --body:'Hanken Grotesk',system-ui,sans-serif;
+  --ease:cubic-bezier(.16,1,.3,1);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#0B0E10;overflow:hidden}
+body{font-family:var(--body);color:var(--paper)}
+::selection{background:var(--cinta);color:var(--ink)}
+#stage{position:absolute;left:50%;top:50%;width:1920px;height:1080px;transform-origin:0 0;overflow:hidden;
+  background:
+    repeating-linear-gradient(135deg,rgba(255,255,255,.018) 0 2px,transparent 2px 6px),
+    radial-gradient(1200px 700px at 85% 110%,rgba(239,194,27,.07),transparent 70%),
+    var(--ink)}
+
+/* la cinta métrica: riel superior de la que cuelga todo */
+.tape{position:absolute;left:0;right:0;top:0;height:46px;background:var(--cinta);color:var(--ink);z-index:6;
+  display:flex;align-items:center;padding:0 72px;font:800 21px var(--display);letter-spacing:.16em;text-transform:uppercase}
+.tape .tag{margin-left:auto}
+.tape::after{content:"";position:absolute;left:0;right:0;bottom:0;height:13px;
+  background:
+    repeating-linear-gradient(90deg,var(--ink) 0 2px,transparent 2px 96px) 0 0/100% 13px,
+    repeating-linear-gradient(90deg,var(--ink) 0 2px,transparent 2px 24px) 0 100%/100% 7px;
+  background-repeat:repeat-x}
+
+.slide{position:absolute;inset:46px 0 0 0;padding:72px 96px 100px;display:none;flex-direction:column}
+.slide.on{display:flex}
+@keyframes up{from{opacity:0;transform:translateY(34px)}to{opacity:1;transform:none}}
+@keyframes drop{from{transform:translateY(-110%)}to{transform:none}}
+@keyframes grow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.slide.on .r{animation:up .8s var(--ease) both;animation-delay:calc(var(--i,0)*80ms)}
+@media (prefers-reduced-motion:reduce){.slide.on .r,.slide.on .swatch,.slide.on .fill{animation:none!important}}
+
+h1,h2,h3{font-family:var(--display);text-transform:uppercase;font-weight:800;letter-spacing:.005em}
+h2{font-size:150px;line-height:.86}
+h2 em,h1 em{font-style:normal;color:var(--cinta)}
+h2.sm{font-size:116px}
+p,li{font-size:34px;line-height:1.36;color:#DCE1E4;text-wrap:pretty}
+strong{color:var(--paper);font-weight:700}
+.dim{color:var(--acero)}
+.pend{background:var(--cinta);color:var(--ink);padding:2px 14px;border-radius:4px;font-weight:800}
+.lab{font:800 27px var(--display);letter-spacing:.2em;text-transform:uppercase;color:var(--acero)}
+
+/* 1 · portada */
+.cover{padding-right:0}
+.cover h1{font-size:250px;line-height:.82;margin-top:12px;max-width:830px}
+.cover .sub{font-size:40px;line-height:1.28;margin-top:40px;max-width:790px}
+.cover .meta{margin-top:auto;font-size:25px;color:var(--acero);line-height:1.55;max-width:830px}
+.cover .meta b{color:var(--paper);font-weight:700}
+.rack{position:absolute;top:-46px;right:96px;display:flex;gap:14px;align-items:flex-start}
+.swatch{position:relative;width:160px;border-radius:0 0 6px 6px;background-image:url(img/anexo_looks_api.jpg);
+  background-repeat:no-repeat;background-size:3935px auto;
+  background-position:calc(-1px*(var(--i)*656 + 248)) -59px;
+  box-shadow:0 24px 40px -18px rgba(0,0,0,.65);animation:drop 1.1s var(--ease) both;animation-delay:calc(var(--i)*110ms + 200ms)}
+.swatch b{position:absolute;left:50%;top:92px;transform:translate(-50%,-50%);width:58px;height:58px;border-radius:50%;
+  background:var(--cinta);color:var(--ink);font:800 40px/58px var(--display);text-align:center;box-shadow:0 0 0 6px var(--ink)}
+.swatch.s1{height:900px}.swatch.s2{height:800px}.swatch.s3{height:860px}.swatch.s4{height:760px}.swatch.s5{height:830px}
+
+/* 2 · problema */
+.prob{display:grid;grid-template-columns:1fr 570px;column-gap:80px;flex:1;min-height:0}
+.prob .ask{font:700 54px/1.08 var(--display);text-transform:uppercase;letter-spacing:.01em;color:var(--paper);margin-top:44px;max-width:1100px}
+.prob .ask span{color:var(--cinta)}
+.prob .who{position:relative;align-self:start;aspect-ratio:300/430;border-radius:10px;background:url(img/anexo_looks_api.jpg) no-repeat;
+  background-size:600% auto;background-position:0% 100%;box-shadow:0 30px 50px -24px #000}
+.prob .who span{position:absolute;left:0;bottom:0;right:0;padding:16px 22px;background:linear-gradient(transparent,rgba(21,25,28,.92));
+  font:700 30px var(--display);letter-spacing:.14em;text-transform:uppercase}
+.path{display:grid;grid-template-columns:repeat(4,1fr);margin-top:auto;position:relative;padding-top:42px}
+.path::before{content:"";position:absolute;left:0;right:0;top:0;height:14px;background:var(--cinta);
+  -webkit-mask:repeating-linear-gradient(90deg,#000 0 3px,transparent 3px 24px);mask:repeating-linear-gradient(90deg,#000 0 3px,transparent 3px 24px)}
+.path div{padding-right:36px}
+.path div::before{content:attr(data-n);display:block;font:800 76px/1 var(--display);color:var(--cinta);margin-bottom:6px}
+.path p{font-size:29px;line-height:1.3}
+
+/* 3 · tres bandas */
+.bands{display:flex;flex-direction:column;margin-top:44px;flex:1}
+.band{display:grid;grid-template-columns:640px 1fr;align-items:center;flex:1;border-top:2px solid var(--linea)}
+.band:last-child{border-bottom:2px solid var(--linea)}
+.band h3{font-size:100px;line-height:.9;color:var(--cinta)}
+.band p{font-size:37px;max-width:1000px}
+
+/* 4 · diagrama */
+.diag{flex:1;min-height:0;margin-top:34px;background:#fff;border-radius:12px;padding:20px 28px;display:flex;align-items:center;justify-content:center;
+  box-shadow:0 30px 50px -24px #000}
+.diag img{max-width:100%;max-height:100%;object-fit:contain}
+.cap{font-size:25px;color:var(--acero);margin-top:18px;max-width:1500px}
+
+/* 5 · dos formas */
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:0;margin-top:40px}
+.choose{margin-top:34px;font:700 52px/1 var(--display);text-transform:uppercase;letter-spacing:.02em}
+.choose em{font-style:normal;color:var(--cinta)}
+.way{padding:44px 56px;display:flex;flex-direction:column}
+.way.a{background:var(--cinta);color:var(--ink);border-radius:10px 0 0 10px}
+.way.b{border:3px solid var(--cinta);border-left:0;border-radius:0 10px 10px 0}
+.way h3{font-size:128px;line-height:.82}
+.way .tipo{font:800 30px var(--display);letter-spacing:.18em;text-transform:uppercase;margin:12px 0 26px}
+.way.a .tipo{color:rgba(21,25,28,.78)}.way.b .tipo{color:var(--cinta)}
+.way dl{display:grid;grid-template-columns:170px 1fr;row-gap:22px;margin-top:34px}
+.way dt{font:800 25px var(--display);letter-spacing:.16em;text-transform:uppercase;padding-top:7px}
+.way.a dt{color:rgba(21,25,28,.72)}.way.b dt{color:var(--acero)}
+.way dd{font-size:33px;line-height:1.25}
+.way.a dd{color:var(--ink);font-weight:500}.way.b dd{color:#E4E8EA}
+
+/* 6 · looks */
+.looks{display:grid;grid-template-columns:repeat(6,1fr);column-gap:12px;margin-top:44px}
+.look{position:relative;aspect-ratio:300/430;background:url(img/anexo_looks_api.jpg) no-repeat;background-size:600% auto;
+  background-position:calc(var(--i)*20%) 100%;border-radius:8px;box-shadow:0 26px 36px -20px #000}
+.look i{position:absolute;left:12px;top:12px;font:800 32px/1 var(--display);padding:6px 14px 5px;background:var(--cinta);color:var(--ink);border-radius:4px;font-style:normal;letter-spacing:.06em}
+.look.o i{background:var(--ink);color:var(--paper)}
+
+/* 7 · estilo */
+.est{display:grid;grid-template-columns:830px 1fr;column-gap:96px;flex:1;margin-top:90px;min-height:0}
+.rule{position:relative;padding-left:86px}
+.rule li:not(:last-child)::after{content:"";position:absolute;left:-59px;top:70px;bottom:-8px;width:6px;background:var(--cinta)}
+.rule li{list-style:none;position:relative;padding:18px 0 18px;font-size:35px;line-height:1.22;color:#E4E8EA}
+.rule li::before{content:attr(data-n);position:absolute;left:-86px;top:9px;width:60px;height:60px;border-radius:50%;background:var(--cinta);color:var(--ink);
+  font:800 40px/60px var(--display);text-align:center}
+.rule li.hi{color:var(--paper);font-weight:700}
+.quote{font:600 46px/1.22 var(--body);color:var(--paper);position:relative;padding-top:60px}
+.quote::before{content:"“";position:absolute;left:-6px;top:-44px;font:800 230px/1 var(--display);color:var(--cinta)}
+.quote small{display:block;font:700 23px var(--display);letter-spacing:.2em;text-transform:uppercase;color:var(--acero);margin-top:18px}
+.perfil{margin-top:44px}
+.prow{display:grid;grid-template-columns:330px 1fr;align-items:baseline;border-top:2px solid var(--linea);padding:20px 0}
+.prow:last-child{border-bottom:2px solid var(--linea)}
+.prow h3{font-size:74px;line-height:1}
+.prow p{font:700 52px/1.05 var(--display);text-transform:uppercase;letter-spacing:.02em;color:var(--paper)}
+.prow.no h3{color:var(--rechazo)}.prow.si h3{color:var(--ok)}
+
+/* 8 · explicabilidad */
+.flow{display:grid;grid-template-columns:1fr 70px 1fr 70px 1.12fr 70px 1fr;align-items:stretch;margin-top:64px}
+.node{border:3px solid var(--linea);border-radius:10px;padding:34px 30px;display:flex;flex-direction:column;gap:12px;background:var(--ink2)}
+.node h3{font-size:56px;line-height:.95}
+.node p{font-size:27px;line-height:1.3}
+.node.v{background:var(--cinta);border-color:var(--cinta);color:var(--ink);transform:scale(1.07)}
+.node.v h3,.node.v p{color:var(--ink)}.node.v p{font-weight:500}
+.wire{align-self:center;height:6px;background:var(--cinta);position:relative}
+.wire::after{content:"";position:absolute;right:-2px;top:-9px;border:12px solid transparent;border-left:20px solid var(--cinta);border-right:0}
+.fallback{margin-top:78px;display:grid;grid-template-columns:repeat(3,1fr);gap:0;border-top:2px solid var(--linea)}
+.fallback div{padding:26px 36px 0 0}
+.fallback b{display:block;font:800 29px var(--display);letter-spacing:.16em;text-transform:uppercase;color:var(--cinta);margin-bottom:6px}
+.fallback p{font-size:29px}
+
+/* 9 · ética */
+.etica{display:grid;grid-template-columns:1fr 1fr;column-gap:110px;flex:1;min-height:0}
+.etica h2{font-size:190px;line-height:.82;align-self:center}
+.chk{display:flex;flex-direction:column;justify-content:center;gap:50px}
+.chk h3{font-size:46px;color:var(--cinta);letter-spacing:.06em;margin-bottom:6px}
+.chk li{list-style:none;position:relative;padding:11px 0 11px 72px;font-size:33px;line-height:1.28}
+.chk li::before{content:"";position:absolute;left:14px;top:12px;width:22px;height:34px;border-right:7px solid var(--cinta);border-bottom:7px solid var(--cinta);transform:rotate(40deg) scale(.82);transform-origin:bottom right}
+
+/* 10 · resultados */
+.res{display:flex;flex-direction:column;margin-top:34px;flex:1}
+.mrow{display:grid;grid-template-columns:760px 1fr;align-items:center;border-top:2px solid var(--linea);padding:22px 0;flex:0 0 auto}
+.mrow p{font-size:33px;line-height:1.22}
+.mrow p b{color:var(--paper)}
+.ticks{display:flex;gap:10px;align-items:flex-end}
+.t{width:56px;height:76px;border:4px solid var(--linea);border-radius:5px}
+.t.f{background:var(--cinta);border-color:var(--cinta);transform-origin:bottom;animation:grow .6s var(--ease) both}
+.t.f{animation-name:rise}
+@keyframes rise{from{transform:scaleY(.1)}to{transform:none}}
+.ticks small{margin-left:22px;font:800 46px var(--display);color:var(--paper);letter-spacing:.04em;align-self:center}
+.lim{margin-top:auto;border-top:2px solid var(--linea);padding-top:26px}
+.lim p{font-size:30px;line-height:1.34;max-width:1600px}
+
+/* 11 · demo */
+.end h2{font-size:250px;line-height:.9;margin-top:6px}
+.mk{display:grid;grid-template-columns:repeat(6,1fr);margin-top:auto;position:relative;padding-top:52px}
+.mk::before{content:"";position:absolute;left:0;right:0;top:0;height:18px;background:var(--cinta);
+  -webkit-mask:repeating-linear-gradient(90deg,#000 0 3px,transparent 3px 20px);mask:repeating-linear-gradient(90deg,#000 0 3px,transparent 3px 20px)}
+.mk div{padding-right:22px;font:800 47px/1 var(--display);text-transform:uppercase;letter-spacing:.015em}
+.mk div::before{content:attr(data-n);display:block;color:var(--cinta);font-size:92px;margin-bottom:8px}
+.fin{margin-top:46px;font-size:30px;color:var(--acero)}
+
+/* progreso */
+#bar{position:absolute;left:0;right:0;bottom:0;height:46px;display:flex;align-items:center;gap:8px;padding:0 96px;z-index:5;
+  font:800 23px var(--display);letter-spacing:.14em;color:var(--acero)}
+#bar i{flex:1;height:8px;background:var(--linea);border-radius:4px;transition:background .3s}
+#bar i.d{background:var(--cinta)}
+#bar b{min-width:120px;text-align:right}
+#notes{position:fixed;right:18px;bottom:18px;width:min(560px,92vw);max-height:46vh;overflow:auto;background:rgba(11,14,16,.97);
+  border:2px solid var(--cinta);border-radius:12px;padding:16px 20px;font-size:17px;line-height:1.45;color:#DCE1E4;display:none;z-index:20}
+#notes.on{display:block}#notes h4{font:800 15px var(--display);letter-spacing:.2em;color:var(--cinta);margin-bottom:8px}
+.hint{position:fixed;left:14px;top:56px;font:600 13px var(--body);color:#C3CBD0;z-index:20;transition:opacity 1s;background:rgba(11,14,16,.7);padding:4px 10px;border-radius:6px}
+.hint.off{opacity:0}
+</style>
+</head>
+<body>
+<div id="stage">
+  <div class="tape"><span>Vitrina IA</span><span class="tag">Planificación y Toma de Decisiones en IA · UTEC</span></div>
+
+  <!-- 1 -->
+  <section class="slide cover" data-notes="Presentarse y presentar al equipo. Una frase: es un probador virtual para tiendas de moda en línea; el cliente se ve a sí mismo con cinco looks y el sistema aprende de lo que acepta y rechaza.">
+    <div class="rack" aria-hidden="true">
+      <div class="swatch s1" style="--i:1"><b>1</b></div><div class="swatch s2" style="--i:2"><b>2</b></div><div class="swatch s3" style="--i:3"><b>3</b></div>
+      <div class="swatch s4" style="--i:4"><b>4</b></div><div class="swatch s5" style="--i:5"><b>5</b></div>
+    </div>
+    <h1 class="r">Vitrina<br><em>IA</em></h1>
+    <p class="sub r" style="--i:2">Probador virtual para tiendas de moda en línea: cinco looks sobre tu propia foto, que aprenden de lo que aceptas y rechazas.</p>
+    <div class="meta r" style="--i:3"><b>Edgar Chambilla · Jose Osnayo · Luis Romero<br>Andrés Torres · Jose Wong</b><br>Dra. Aurea Soriano-Vargas · Mg. Robert Buleje-Del-Carpio<br>Lima, noviembre de 2026</div>
+  </section>
+
+  <!-- 2 -->
+  <section class="slide" data-notes="El problema es la incertidumbre al comprar sin probarse. La IA ayuda porque edita la foto del propio cliente, pero tiene límites: puede cambiar el rostro o inventar prendas. Por eso solo regenera la ropa y la decisión es del cliente. Caso de uso de Ana en 20 segundos.">
+    <div class="prob">
+      <div style="display:flex;flex-direction:column;min-height:0">
+        <h2 class="r">Comprar ropa <em>sin probártela</em></h2>
+        <p class="ask r" style="--i:2">¿Cómo verme con cada prenda desde <span>una sola foto</span>, sin que cambie mi identidad y <span>decidiendo yo</span>?</p>
+        <div class="path r" style="--i:4">
+          <div data-n="1"><p>Ana sube su foto de cuerpo entero</p></div>
+          <div data-n="2"><p>Elige Mujer y la ocasión Reunión</p></div>
+          <div data-n="3"><p>Recibe cinco looks y rechaza dos</p></div>
+          <div data-n="4"><p>Deduce su estilo y pide otra ronda</p></div>
+        </div>
+      </div>
+      <div class="who r" style="--i:3" role="img" aria-label="Foto original de la clienta"><span>Ana · foto original</span></div>
+    </div>
+  </section>
+
+  <!-- 3 -->
+  <section class="slide" data-notes="Las tres preguntas del producto. Modelo B2B2C: la tienda integra y paga, el consumidor usa. No hay cifras de ventas: son supuestos a validar.">
+    <h2 class="r sm">Qué es, para quién,<br><em>para qué</em></h2>
+    <div class="bands">
+      <div class="band r" style="--i:2"><h3>¿Qué es?</h3><p>Un probador virtual web con IA: genera cinco looks según la ocasión, las prendas del catálogo o una instrucción propia, con <strong>dos maneras de generar</strong> a elegir.</p></div>
+      <div class="band r" style="--i:3"><h3>¿Para quién?</h3><p>El consumidor de tiendas de moda en línea. Quien paga es la <strong>tienda</strong>, que integra el probador en su web (B2B2C).</p></div>
+      <div class="band r" style="--i:4"><h3>¿Para qué?</h3><p>Para <strong>comprar con más confianza</strong> y descubrir combinaciones por ocasión, y para que la tienda conozca lo que gusta a partir de aceptadas y rechazadas.</p></div>
+    </div>
+  </section>
+
+  <!-- 4 -->
+  <section class="slide" data-notes="Recorrer el diagrama de izquierda a derecha: guardrails de entrada, generación, guardrails de salida, revisión del cliente, registro, iteración con estilo y agente explicador con verificador. Señalar los ciclos rojos: nueva ronda y reintento del LLM.">
+    <h2 class="r sm">Del clic a la <em>decisión explicada</em></h2>
+    <div class="diag r" style="--i:2"><img src="img/arquitectura.png" alt="Arquitectura del sistema"></div>
+    <p class="cap r" style="--i:3">Las flechas rojas discontinuas son ciclos de corrección: nueva ronda sobre lo rechazado y reintento del LLM con los errores del verificador.</p>
+  </section>
+
+  <!-- 5 -->
+  <section class="slide" data-notes="Elegimos dos de los tres niveles. El básico es la API: más fiel en colores pero de pago y con la foto fuera del equipo. El intermedio corre en local, es gratis y reproducible, y conserva el rostro porque solo regenera la ropa. El cliente elige; si uno falla queda el otro.">
+    <h2 class="r sm">Dos formas de <em>generar</em></h2>
+    <div class="duo r" style="--i:2">
+      <div class="way a"><h3>API</h3><div class="tipo">Nivel básico · gpt-image-2</div>
+        <dl><dt>Cómo</dt><dd>Recibe la foto y el look y devuelve la imagen</dd>
+        <dt>Fortaleza</dt><dd>Colores muy fieles</dd>
+        <dt>Costo</dt><dd>≈ US$ 0,023 por imagen</dd>
+        <dt>Límite</dt><dd>Sin semilla fija; la foto sale del equipo (consentimiento aparte)</dd></dl></div>
+      <div class="way b"><h3>Local</h3><div class="tipo">Nivel intermedio · segmentación + inpainting</div>
+        <dl><dt>Cómo</dt><dd>SegFormer, ViTPose, SD 1.5 Inpainting y ControlNet regeneran solo la ropa</dd>
+        <dt>Fortaleza</dt><dd>Gratis, semilla fija; el rostro queda intacto</dd>
+        <dt>Costo</dt><dd>US$ 0</dd>
+        <dt>Límite</dt><dd>Más lento (2 a 5 min en GPU de 4 GB); colores negros menos fieles</dd></dl></div>
+    </div>
+    <p class="choose r" style="--i:3">El cliente elige cuál usar; <em>si uno falla, queda el otro</em></p>
+  </section>
+
+  <!-- 6 -->
+  <section class="slide" data-notes="Mostrar que son cinco looks distintos sobre la misma foto, con etiqueta Simulación IA. Rostro, manos y zapatos se conservan. Esta imagen es con el enfoque básico.">
+    <h2 class="r">Cinco looks, <em>una misma foto</em></h2>
+    <div class="looks r" style="--i:2">
+      <div class="look o" style="--i:0"><i>ORIGINAL</i></div>
+      <div class="look" style="--i:1"><i>1</i></div><div class="look" style="--i:2"><i>2</i></div><div class="look" style="--i:3"><i>3</i></div>
+      <div class="look" style="--i:4"><i>4</i></div><div class="look" style="--i:5"><i>5</i></div>
+    </div>
+    <p class="cap r" style="--i:3">Ocasión Trabajo · enfoque básico (API). Cada imagen lleva la etiqueta «Simulación IA»; rostro, manos y zapatos se conservan.</p>
+  </section>
+
+  <!-- 7 -->
+  <section class="slide" data-notes="Lo central: el sistema personaliza las rondas con tus decisiones. No reentrena ningún modelo; elige qué looks pedir. La ronda 1 explora, no personaliza. Ejemplo del pantalón pitillo. El perfil es editable y vive solo en la sesión.">
+    <h2 class="r sm">Lo que decides <em>guía la siguiente ronda</em></h2>
+    <div class="est">
+      <ol class="rule r" style="--i:2">
+        <li data-n="1">La ronda 1 <strong>explora</strong>: cinco looks variados</li>
+        <li data-n="2">Aceptas o rechazas y escribes el motivo</li>
+        <li data-n="3">El LLM lee los motivos y un verificador los comprueba</li>
+        <li data-n="4" class="hi">Editas tu perfil Quiero / No quiero</li>
+        <li data-n="5" class="hi">Nueva ronda: looks afines, sin lo que no quieres</li>
+      </ol>
+      <div class="r" style="--i:3">
+        <div class="quote">no me gustan los pantalones pitillo, me gustan los rectos o baggy<small>Motivo escrito por la clienta</small></div>
+        <div class="perfil">
+          <div class="prow no"><h3>No quiero</h3><p>corte pitillo</p></div>
+          <div class="prow si"><h3>Quiero</h3><p>corte recto<br>corte baggy</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 8 -->
+  <section class="slide" data-notes="El LLM redacta, el programa decide qué es verdad. El verificador compara identificadores y estados con el registro. Si falla, reintenta con los errores; si sigue fallando, un respaldo fija el estado y el LLM solo reescribe el motivo; el último recurso es una plantilla marcada como tal.">
+    <h2 class="r sm">El LLM redacta, <em>el verificador decide</em></h2>
+    <div class="flow r" style="--i:2">
+      <div class="node"><h3>Registro</h3><p>Las decisiones de cada look, guardadas de forma estructurada</p></div><div class="wire"></div>
+      <div class="node"><h3>LLM redacta</h3><p>Qwen2.5-1.5B o Phi-3.5-mini, locales, a elección</p></div><div class="wire"></div>
+      <div class="node v"><h3>Verificador</h3><p>Sin LLM: identificadores y estados iguales al registro</p></div><div class="wire"></div>
+      <div class="node"><h3>Resumen</h3><p>Qué se aceptó, qué se rechazó y por qué</p></div>
+    </div>
+    <div class="fallback r" style="--i:4">
+      <div><b>Si falla</b><p>Reintenta hasta 2 veces con los errores</p></div>
+      <div><b>Si sigue fallando</b><p>El programa fija el estado y el LLM solo reescribe el motivo</p></div>
+      <div><b>Último recurso</b><p>Plantilla marcada como tal</p></div>
+    </div>
+  </section>
+
+  <!-- 9 -->
+  <section class="slide" data-notes="El mayor riesgo es sexualizar o desvestir. Se mitiga de forma preventiva: lista cerrada, máscara solo sobre la ropa y términos vetados, no solo un filtro posterior. El filtro NSFW de SD daba falsos positivos con ropa normal, por eso solo se registra. Con la API la foto sale del equipo: consentimiento aparte.">
+    <div class="etica">
+      <h2 class="r">Prevenir,<br><em>no solo filtrar</em></h2>
+      <div class="chk r" style="--i:2">
+        <div><h3>Antes de generar</h3><ul><li>Foto propia, mayor de edad, una persona</li><li>Consentimiento aparte para usar la API</li><li>Lista cerrada de prendas y términos vetados</li></ul></div>
+        <div><h3>Al generar y después</h3><ul><li>La máscara cubre solo la ropa; se compara el rostro</li><li>Etiqueta «Simulación IA» en cada imagen</li><li>Perfil solo en la sesión, con botón para borrarla</li></ul></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 10 -->
+  <section class="slide" data-notes="Ser honestos con las cifras: son exploratorias, con una foto de prueba. Lo no medido con personas está marcado como pendiente. Completar el campo amarillo con las cifras del Excel de pruebas antes de presentar.">
+    <h2 class="r sm">Lo medido y <em>lo que falta</em></h2>
+    <div class="res r" style="--i:2">
+      <div class="mrow"><p><b>Colores correctos con la API</b><br><span class="dim">una foto de prueba</span></p>
+        <div class="ticks"><span class="t f"></span><span class="t f"></span><span class="t f"></span><span class="t f"></span><span class="t f"></span><small>5 de 5</small></div></div>
+      <div class="mrow"><p><b>Intermedio, una pasada</b><br><span class="dim">10 looks de la línea mujer</span></p>
+        <div class="ticks"><span class="t f"></span><span class="t f"></span><span class="t f"></span><span class="t f"></span><span class="t"></span><span class="t"></span><span class="t"></span><span class="t"></span><span class="t"></span><span class="t"></span><small>4 de 10</small></div></div>
+      <div class="mrow"><p><b>Intermedio, dos pasadas</b><br><span class="dim">mismos 10 looks</span></p>
+        <div class="ticks"><span class="t f"></span><span class="t f"></span><span class="t f"></span><span class="t f"></span><span class="t f"></span><span class="t f"></span><span class="t f"></span><span class="t f"></span><span class="t"></span><span class="t"></span><small>8 de 10</small></div></div>
+      <div class="mrow"><p><b>Aceptación ronda 1 frente a ronda 2 y SUS</b><br><span class="dim">con participantes</span></p><p><span class="pend">por completar</span></p></div>
+      <div class="lim"><p><strong>Límites:</strong> prendas descritas y no artículos exactos · negros de arriba que salen grises en el intermedio · baggy que sale recto sin la API · estilo con vocabulario fijo de etiquetas · cifras exploratorias.</p></div>
+    </div>
+  </section>
+
+  <!-- 11 -->
+  <section class="slide end" data-notes="Guion de la demo (≤ 6 min en total): 1) subir foto y consentimiento, elegir enfoque; 2) cinco looks; 3) aceptar/rechazar con un motivo; 4) Deducir mi estilo; 5) Nueva ronda con mi estilo y mostrar el por qué; 6) Explicar mi elección. Tener la app abierta antes de empezar.">
+    <h2 class="r">Probemos<br><em>Vitrina IA</em></h2>
+    <p class="fin r" style="--i:2">Demostración en vivo · ¿Preguntas? · Gracias</p>
+    <div class="mk r" style="--i:3">
+      <div data-n="1">Foto y consentimiento</div><div data-n="2">Cinco looks</div><div data-n="3">Aceptar y rechazar</div>
+      <div data-n="4">Deducir mi estilo</div><div data-n="5">Nueva ronda con mi estilo</div><div data-n="6">Explicar mi elección</div>
+    </div>
+  </section>
+
+  <div id="bar"></div>
+</div>
+<aside id="notes" aria-live="polite"><h4>NOTAS · tecla N</h4><div id="nt"></div></aside>
+<div class="hint">← → navegar · N notas · F pantalla completa</div>
+<script>
+(function(){
+  var st=document.getElementById('stage'), sl=[].slice.call(document.querySelectorAll('.slide')),
+      bar=document.getElementById('bar'), notes=document.getElementById('notes'), nt=document.getElementById('nt'), cur=0;
+  sl.forEach(function(){var i=document.createElement('i');bar.appendChild(i)});
+  var lab=document.createElement('b');bar.appendChild(lab);
+  function fit(){var s=Math.min(innerWidth/1920,innerHeight/1080);
+    st.style.transform='translate('+(-960*s)+'px,'+(-540*s)+'px) scale('+s+')'}
+  function show(n){cur=Math.max(0,Math.min(sl.length-1,n));
+    sl.forEach(function(el,k){el.classList.toggle('on',k===cur)});
+    [].forEach.call(bar.querySelectorAll('i'),function(i,k){i.classList.toggle('d',k<=cur)});
+    lab.textContent=(cur+1)+' / '+sl.length;
+    nt.textContent=sl[cur].getAttribute('data-notes')||'';
+    if(location.hash!=='#'+(cur+1))history.replaceState(null,'','#'+(cur+1))}
+  function fromHash(){var n=parseInt(location.hash.slice(1),10);show(isNaN(n)?0:n-1)}
+  addEventListener('resize',fit);addEventListener('hashchange',fromHash);
+  addEventListener('keydown',function(e){
+    if(e.key==='ArrowRight'||e.key==='PageDown'||e.key===' ')show(cur+1);
+    else if(e.key==='ArrowLeft'||e.key==='PageUp')show(cur-1);
+    else if(e.key==='Home')show(0);else if(e.key==='End')show(sl.length-1);
+    else if(e.key==='n'||e.key==='N')notes.classList.toggle('on');
+    else if(e.key==='f'||e.key==='F'){document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen()}});
+  var x0=null;addEventListener('touchstart',function(e){x0=e.touches[0].clientX});
+  addEventListener('touchend',function(e){if(x0===null)return;var d=e.changedTouches[0].clientX-x0;
+    if(Math.abs(d)>50)show(cur+(d<0?1:-1));x0=null});
+  fit();fromHash();setTimeout(function(){document.querySelector('.hint').classList.add('off')},6000);
+})();
+</script>
+</body>
+</html>
