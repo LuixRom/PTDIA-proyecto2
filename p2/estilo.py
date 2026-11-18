@@ -253,15 +253,29 @@ def elegir(cfg, linea, ocasion, quiero, no_quiero, mostrados, n, has_pants=False
 
 
 def _ajustados(cfg, linea, ocasion, quiero, no_quiero, k, has_pants):
-    """Respaldo sin candidatos nuevos: el look con más coincidencias, con el texto ajustado al corte o color preferido."""
+    """Respaldo sin candidatos nuevos: los looks base con el texto ajustado al corte o color preferido.
+    Primero los que no tienen nada de «No quiero» (solo si no queda ninguno, los que menos tienen) y después los de más
+    coincidencias con «Quiero»; sin ropa repetida mientras haya ropa distinta (el mismo traje con otros lentes no cuenta)."""
     from .vitrina import _look
     en = cfg.get("estilo", {}).get("en", {})
-    base = sorted(candidatos(cfg, linea, ocasion, has_pants),
-                  key=lambda x: (-len(set(etiquetas(cfg, x[0])) & quiero), len(set(etiquetas(cfg, x[0])) & no_quiero)))
+
+    def orden(items):
+        t = set(etiquetas(cfg, items))
+        return len(t & no_quiero), -len(t & quiero)
+    base, ropa = [], set()
+    for items, _ in sorted(candidatos(cfg, linea, ocasion, has_pants), key=lambda x: orden(x[0])):
+        r = tuple(sorted(_look(cfg, items)["items"]))
+        if r not in ropa:
+            ropa.add(r)
+            base.append(items)
+    if not base:
+        return []
+    limpios = [b for b in base if not orden(b)[0]]
+    base = limpios or base  # con alguno limpio, nunca se usa uno con «No quiero»; si no, los que menos tienen
     ajustes = [q for q in sorted(quiero) if q.split(" ", 1)[0] in ("corte", "color") and q.split(" ", 1)[1] in en] or [""]
     out = []
     for j in range(k):
-        items = base[j % len(base)][0]
+        items = base[j % len(base)]
         a = ajustes[j % len(ajustes)]
         lk = _look(cfg, items)
         if a:

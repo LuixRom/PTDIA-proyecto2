@@ -83,3 +83,60 @@ Se genera con `.venv\Scripts\python.exe tools\exportar_pruebas.py C:\PTDIA\sesio
 - 257 pasan y 3 se omiten (playwright no instalado).
 - 1 falla desde antes de estos cambios: `test_halo_of_old_silhouette…`, porque OpenCV no está en el `.venv`.
 - `tests/test_lora.py` necesita torch.
+
+## Validación de las prendas nuevas con los modelos reales (rama `estilo-usuario-mejoras`)
+Probado en una RTX 2060 (6 GB) con `tools/eval_local.py`, foto `p2/assets/ejemplos/pose_ejemplo.jpg` (cuerpo entero, jean
+celeste), ocasiones «trabajo» y «casual» de la línea mujer, modo prueba (semillas fijas). Falta la línea hombre: no hay
+una foto de cuerpo entero de hombre en el repositorio.
+
+**Problema encontrado.** En los looks de dos prendas (arriba + pantalón) el color salía mal casi siempre, sobre todo
+hacia el azul: pantalón negro → azul petróleo, pantalón ancho beige → celeste, pitillo gris → azul marino, polo negro →
+blanco. Los looks de una pieza (traje beige) salían bien.
+
+**Causa, comprobada por partes** (cada hipótesis con 4 semillas y el color medido en HSV, no a ojo):
+1. No es el ControlNet: sin él (escala 0) el pantalón seguía saliendo azul.
+2. No son los píxeles de debajo de la máscara: rellenarlos de gris daba la misma imagen.
+3. Sí es **la ropa original que queda a la vista**. La máscara no cubre del todo los bordes del jean y el modelo
+   continúa esa tela: con solo el prompt «black tailored dress trousers» salía azul. Dilatando la máscara 9 px salió
+   negro 4 de 4. Cuando la zona de abajo se genera con la polera original a la vista, copia su azul marino.
+4. Además, con las dos prendas en un solo prompt, SD 1.5 mezcla los colores («light blue» tiñe todo el look).
+
+**Solución (approaches.B.dos_pasadas en config/vitrina.yaml).**
+- Pasada 1: se tapa todo el look y la zona del pantalón se ensancha 9 px (`dilatar_abajo`), nunca sobre el rostro ni
+  el cabello. Se genera con el prompt del pantalón solo y con un negativo «blue, denim, jeans» si el pantalón no es
+  azul ni celeste («blue» si es un jean de otro color).
+- Pasada 2: se regenera la prenda de arriba con su propio prompt.
+
+Solo se aplica a looks de arriba + abajo separados; ternos y vestidos siguen en una pasada. Cada imagen registra
+`pasadas` en sus métricas.
+
+**Resultado** (misma foto, mismas ocasiones):
+
+| | Antes | Después |
+|---|---|---|
+| Looks con los colores correctos («trabajo» + «casual», 10 looks) | 4 de 10 | 8 de 10 |
+| Pantalón negro, en la pasada de abajo, 4 semillas | 0/4 | 4/4 |
+
+El «después» usa 2 candidatos por look elegidos con CLIP (ver abajo) y el «antes» 1, así que la comparación mezcla los
+dos cambios. El aislado es el del pantalón negro.
+
+**Candidatos con CLIP en la app local.** `tools/app_local.py` ahora usa 2 candidatos + CLIP si la GPU tiene 6 GB o
+más; con 4 GB sigue con 1. CLIP penaliza los estampados que inventa SD (leopardo, cuadros) cuando hay dos pasadas.
+
+**Costo.** Un look de dos prendas tarda el doble (dos pasadas) y con 2 candidatos otra vez el doble: los 5 looks pasan
+de unos 50 s a unos 2 min en la RTX 2060.
+
+**Limitaciones que siguen.**
+- Las prendas **negras de arriba** (polo negro) salen gris oscuro.
+- A veces aparecen texturas en las mangas.
+- Una vez la blusa blanca salió gris (copia el color del pantalón que ya está a la vista en la pasada 2).
+- El **jean baggy** sigue saliendo recto: la máscara no sale del contorno del pantalón original (ya estaba anotado).
+
+## Otros arreglos de la rama `estilo-usuario-mejoras`
+- `estilo._ajustados` (respaldo de la ronda con mi estilo cuando ya no quedan looks nuevos) elegía looks con prendas de
+  «No quiero». Por ejemplo, a quien rechazó el gris le daba tres looks con pantalón gris, «porque prefieres corte
+  recto». También repetía la misma ropa. Ahora nunca usa algo de «No quiero» si hay alternativa y no repite ropa. Esto
+  afecta la métrica «% que respeta No quiero».
+- Los notebooks y el ZIP del código salen idénticos en Windows y Linux (antes cambiaban por los saltos de línea y los
+  tests decían que estaban desactualizados).
+- `tools/app_local.py` guarda las sesiones en `~/PTDIA/sesiones_local` en Linux (en Windows sigue `C:\PTDIA\...`).

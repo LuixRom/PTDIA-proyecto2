@@ -465,6 +465,8 @@ def negative_for(spec, cfg):
         return f"{spec['extra_negative']}, {acc_neg}" if spec.get("extra_negative") else acc_neg
     if g.get("pattern_negative") and not _has_pattern(spec["prompt"]):
         neg = g["pattern_negative"] + ", " + neg  # delante: CLIP corta a 77 tokens y al final se perdía
+    if spec.get("extra_negative"):  # p. ej. «blue, denim» para la prenda de abajo (vitrina._gen_b_dos)
+        neg = spec["extra_negative"] + ", " + neg
     return neg
 
 

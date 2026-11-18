@@ -8,7 +8,7 @@ Uso:
 
 Ajustes para una GPU de 4 GB: Stable Diffusion con descarga a CPU, 1 candidato por look (sin CLIP) y solo Qwen
 como explicador, que se carga en la GPU únicamente mientras redacta el resumen (no caben juntos). Las sesiones se
-guardan fuera del repositorio, en C:\\PTDIA\\sesiones_local (bórrelas al terminar: contienen fotos de personas).
+guardan fuera del repositorio, en C:\\PTDIA\\sesiones_local (Linux: ~/PTDIA/sesiones_local; bórrelas al terminar: contienen fotos de personas).
 """
 import gc
 import os
@@ -44,19 +44,31 @@ def main():
     try:
         import gradio  # noqa: F401
     except ImportError:
-        raise SystemExit('Falta gradio en el .venv: .venv\\Scripts\\python.exe -m pip install "gradio==6.15.2"')
+        raise SystemExit('Falta gradio en el .venv: pip install "gradio==6.15.2" (con el python del .venv)')
     from p2 import __version__, config, tryon, vitrina, vitrina_ui
     from p2.decisions import DecisionStore
     from p2.tempdb import TempDB
     cfg = config.load("config/vitrina.yaml")
-    cfg["approaches"]["B"]["candidates"] = 1
+    import torch
+    vram = torch.cuda.get_device_properties(0).total_memory / 2**30 if torch.cuda.is_available() else 0
+    # 4 GB: 1 candidato por look y sin CLIP. Desde 6 GB caben CLIP y los candidatos de la config (se elige el que mejor
+    # sigue la descripción y se penalizan los estampados inventados): mejor color y menos estampados, el doble de tiempo.
+    clip_ok = vram >= 5.5
+    if not clip_ok:
+        cfg["approaches"]["B"]["candidates"] = 1
     cfg["llms"] = {"qwen": cfg["llms"]["qwen"]}  # Phi (7,6 GB) no cabe en 4 GB
     print(f"Vitrina IA {__version__} (local) — cargando modelos…")
     seg, pose = tryon.Segmenter(cfg), tryon.PoseEstimator(cfg)
     pipe = tryon.load_inpaint(cfg, offload=True)
+    clip = None
+    if clip_ok:
+        from p2 import metrics
+        clip = metrics.Models(cfg, use_lpips=False)
+    print(f"GPU con {vram:.1f} GB: {cfg['approaches']['B']['candidates']} candidato(s) por look"
+          + (" elegidos con CLIP" if clip else ""))
     engine = vitrina.Engine(cfg, seg, None,
                             lambda img, mask, spec, control=None: tryon.gen_b(pipe, img, mask, spec, cfg, control),
-                            lambda img: tryon.nsfw_input(pipe, img), None, pose=pose.detect)
+                            lambda img: tryon.nsfw_input(pipe, img), clip, pose=pose.detect)
     from p2 import api_images
     ed = api_images.ApiEditor(**cfg["approaches"]["API"]["api"])
     if ed.available():
@@ -64,7 +76,9 @@ def main():
         print(f"Enfoque API: disponible ({ed.model}; de pago, pide consentimiento en cada uso).")
     else:
         print("Enfoque API: no disponible (no hay clave en .env). La app usa solo el enfoque local.")
-    store = DecisionStore(Path(os.environ.get("VITRINA_SESIONES", r"C:\PTDIA\sesiones_local")))
+    # fuera del repositorio (contienen fotos de personas): C:\PTDIA en Windows, ~/PTDIA en Linux y macOS
+    defecto = Path(r"C:\PTDIA\sesiones_local") if os.name == "nt" else Path.home() / "PTDIA" / "sesiones_local"
+    store = DecisionStore(Path(os.environ.get("VITRINA_SESIONES", defecto)))
     db = TempDB(store.root / "agente_tmp.sqlite")
     demo = vitrina_ui.build_ui(store, cfg, engine, vitrina_ui.LLMs(cfg, on_demand_llm), db)
     print("Sesiones en", store.root)

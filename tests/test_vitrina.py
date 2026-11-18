@@ -383,7 +383,8 @@ def test_best_of_candidates_by_clip_and_exact_restore(env, vcfg):
     assert n == 2 and v1.seed == 1001 + 104729 and len(v1.metrics["candidates_clip"]) == 2  # eligió el azul
     calls.clear()
     vitrina.restore(store, eng, sid, 1)
-    assert calls[:1] == [1001 + 104729] and len(calls) == 5  # restaurar: 1 generación por look, la semilla elegida
+    pasadas = sum(v.metrics["pasadas"] for v in store.load(sid).variations)  # looks de 2 prendas: 2 pasadas
+    assert calls[:1] == [1001 + 104729] and len(calls) == pasadas  # restaurar: 1 generación por look, la semilla elegida
 
 
 def test_hair_core_protected_edge_repaintable():
@@ -603,3 +604,51 @@ def test_ejemplo_de_pose_incluido():
     h = vt.ejemplo_html()
     assert "data:image/jpeg;base64," in h and "Cómo tomar tu foto" in h
     assert (ROOT_DIR / "p2/assets/ejemplos/pose_ejemplo.jpg").exists()
+
+
+def test_two_pass_only_for_separate_top_and_bottom(vcfg):
+    sp = lambda items, ap="B": {"approach": ap, "items": items}  # noqa: E731
+    assert vitrina.dos_pasadas(vcfg, sp(["m_camisa_celeste", "m_pantalon_negro"])) == (["m_pantalon_negro"], ["m_camisa_celeste"])
+    assert vitrina.dos_pasadas(vcfg, sp(["m_traje_beige"])) is None          # terno: una pieza
+    assert vitrina.dos_pasadas(vcfg, sp(["m_camisa_celeste"])) is None       # solo arriba
+    assert vitrina.dos_pasadas(vcfg, sp(["m_camisa_celeste", "m_pantalon_negro"], "API")) is None
+    off = {**vcfg, "approaches": {**vcfg["approaches"], "B": {**vcfg["approaches"]["B"], "dos_pasadas": False}}}
+    assert vitrina.dos_pasadas(off, sp(["m_camisa_celeste", "m_pantalon_negro"])) is None
+
+
+def _cfg_looks(vcfg, looks):
+    """Copia de la config con la ocasión «reunion» (mujer) reducida a estos looks (5 = la ronda 1 completa)."""
+    import copy
+    c = copy.deepcopy(vcfg)
+    c["ocasiones"]["reunion"]["mujer"] = looks
+    return c
+
+
+def test_two_pass_generates_bottom_then_top_with_own_prompts(tmp_path, vcfg):
+    """Camisa celeste + pantalón negro: dos llamadas, abajo primero sin «blue» y con el negativo de color; el jean no lo lleva."""
+    def run(looks):
+        store, eng = DecisionStore(tmp_path / f"s{len(calls)}"), vitrina.Engine.mock(_cfg_looks(vcfg, looks))
+        gen = eng.gen_b
+
+        def spy(img, mask, spec, control=None):
+            if not spec.get("accessory"):
+                calls.append((spec["look_text"], spec.get("extra_negative")))
+            return gen(img, mask, spec, control)
+        eng.gen_b = spy
+        sid, _ = vitrina.start_session(store, eng, PHOTO, OPTS)
+        return store.load(sid), eng
+    calls = []
+    s, eng = run([["m_camisa_celeste", "m_pantalon_negro"]] * 5)
+    assert all(v.metrics["pasadas"] == 2 for v in s.variations) and len(calls) == 10
+    (t1, n1), (t2, n2) = calls[0], calls[1]
+    assert "black" in t1 and "blue" not in t1 and n1 == eng.cfg["approaches"]["B"]["negativo_abajo"]
+    assert "light blue" in t2 and "trousers" not in t2 and "bottoms" not in t2 and n2 is None
+    calls.clear()
+    run([["m_blusa_blanca", "m_jean_azul"]] * 5)
+    assert calls[0][1] is None  # pidió un jean azul: no se le prohíbe el azul
+    calls.clear()
+    run([["m_polo_negro", "m_jean_pitillo"]] * 5)
+    assert calls[0][1] == "blue"  # jean negro: sin azul, pero sigue siendo denim
+    calls.clear()
+    s, _ = run([["m_traje_beige"]] * 5)
+    assert len(calls) == 5 and all(v.metrics["pasadas"] == 1 for v in s.variations)  # una pasada por look

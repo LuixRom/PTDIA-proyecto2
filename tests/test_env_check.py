@@ -1,3 +1,4 @@
+import importlib.util
 import json
 import re
 import socket
@@ -146,8 +147,11 @@ def test_validation_uses_no_network(cfg, monkeypatch):
     monkeypatch.setattr(socket, "create_connection", boom)
     monkeypatch.setattr(socket, "getaddrinfo", boom)
     assert validate(cfg, *fake(COLAB))["ok"]
-    s = validate(cfg)  # metadatos REALES de este equipo (sin torch): debe terminar, sin red, y no ser ok
-    assert s["ok"] is False and any(p.startswith("torch no está instalado") for p in s["problems"])
+    s = validate(cfg)  # metadatos REALES de este equipo: debe terminar sin red
+    if importlib.util.find_spec("torch") is None:  # equipo sin torch: no debe dar ok
+        assert s["ok"] is False and any(p.startswith("torch no está instalado") for p in s["problems"])
+    else:
+        assert isinstance(s["ok"], bool)
 
 
 # --- estado de validación que exigen las celdas 6 y 7 -------------------------

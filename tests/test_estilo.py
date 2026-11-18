@@ -128,6 +128,17 @@ def test_selection_falls_back_to_adjusted_look(vcfg):
     assert "straight-leg fit" in got[0][0]["text"] or "navy blue color" in got[0][0]["text"]
 
 
+def test_fallback_respects_no_and_does_not_repeat_clothes(vcfg):
+    """Sin candidatos nuevos (todo ya mostrado), el respaldo no debe volver a lo que el cliente no quiere: antes
+    ordenaba primero por «Quiero» y daba tres looks con pantalón gris a quien rechazó el gris."""
+    for linea in ("mujer", "hombre"):
+        mostrados = [vitrina._look(vcfg, i)["name"] for i, _ in estilo.candidatos(vcfg, linea, "trabajo")]
+        got = estilo.elegir(vcfg, linea, "trabajo", ["corte recto", "estilo formal"], ["color gris"], mostrados, 3)
+        assert len(got) == 3 and all("ajustado a tu estilo" in lk["name"] for lk, _ in got)
+        assert all("color gris" not in estilo.etiquetas(vcfg, lk["items"]) for lk, _ in got), linea
+        assert len({tuple(sorted(lk["items"])) for lk, _ in got}) == 3, linea
+
+
 def test_style_round_regenerates_rejected_and_logs_profile(ses, vcfg):
     store, eng, sid = ses
     why = vitrina.ronda_con_estilo(store, eng, sid, ["corte recto", "corte baggy"], ["corte pitillo"], False,

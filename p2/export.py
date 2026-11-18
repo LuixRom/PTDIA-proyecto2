@@ -18,7 +18,7 @@ def write_manifest(root):
     root = Path(root)
     files = sorted(p for p in root.rglob("*") if p.is_file() and p.name != MANIFEST)
     lines = [f"{sha256_file(p)}  {p.relative_to(root).as_posix()}" for p in files]
-    (root / MANIFEST).write_text("\n".join(lines) + "\n", encoding="utf-8")
+    (root / MANIFEST).write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\r\n")  # CRLF fijo (convención del repo): mismo ZIP en Windows y Linux
     return len(lines)
 
 

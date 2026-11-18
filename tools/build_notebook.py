@@ -425,7 +425,7 @@ def build(path="run_colab.ipynb"):
         if kind == CODE:
             cell.update(execution_count=None, outputs=[])
         nb["cells"].append(cell)
-    Path(path).write_text(json.dumps(nb, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+    Path(path).write_text(json.dumps(nb, ensure_ascii=False, indent=1) + "\n", encoding="utf-8", newline="\r\n")  # CRLF fijo: mismos bytes en Windows y Linux
     return path
 
 

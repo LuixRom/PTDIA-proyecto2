@@ -17,7 +17,7 @@ from datetime import datetime
 from pathlib import Path
 
 import numpy as np
-from PIL import Image, ImageFilter
+from PIL import Image, ImageChops, ImageFilter
 
 from . import guardrails as gr_, api_images
 from . import estilo, tryon
@@ -207,6 +207,60 @@ def mask_key(cfg, spec):
     return key + ("_largo" if is_long(cfg, spec["items"]) else "")
 
 
+def dos_pasadas(cfg, spec):
+    """(prendas de abajo, prendas de arriba) si el look se genera en dos pasadas; si no, None.
+    Con las dos prendas en un solo prompt SD 1.5 mezcla los colores (camisa celeste + pantalón negro salía todo azul):
+    primero la prenda de abajo con su propio prompt y después la de arriba. Solo looks de arriba + abajo separados
+    (ternos y vestidos van en una pasada) y solo en el enfoque intermedio (approaches.B.dos_pasadas)."""
+    if spec.get("approach") != "B" or not cfg["approaches"]["B"].get("dos_pasadas"):
+        return None
+    cat = cfg["catalogo"]
+    abajo = [i for i in spec["items"] if cat[i].get("parte") == "abajo"]
+    arriba = [i for i in spec["items"] if i not in abajo]
+    if not abajo or not arriba or any(cat[i].get("zona", "superior") != "superior" for i in arriba):
+        return None
+    return abajo, arriba
+
+
+def _gen_b_dos(engine, img, spec, ctx, abajo, arriba):
+    """Enfoque intermedio en dos pasadas (ver dos_pasadas). Misma semilla, ControlNet y guardrails en ambas."""
+    cfg, b = engine.cfg, engine.cfg["approaches"]["B"]
+    masks = ctx["masks"]
+
+    def sub(items):
+        lk = _look(cfg, items)
+        suf = b.get("upper_only_suffix")
+        if suf:  # en la pasada de arriba la parte de abajo ya está generada: no se describe
+            lk["text"] = lk["text"].removesuffix(", " + suf)
+        return make_spec(cfg, "B", lk, spec["id"], spec["seed"])
+    sb, st = sub(abajo), sub(arriba)
+    # la prenda de abajo tendía al azul (el «pantalón» por defecto de SD es un jean): se evita salvo que la pida azul;
+    # a un jean de otro color (pitillo negro) solo se le prohíbe el azul, no el denim
+    if not any(cfg["catalogo"][i].get("color") in ("azul", "celeste") for i in abajo):
+        neg = b.get("negativo_abajo_jean" if any("jean" in i for i in abajo) else "negativo_abajo")
+        if neg:
+            sb["extra_negative"] = neg
+    full = masks.get(mask_key(cfg, spec)) or masks[zone_of(cfg, spec["items"])]
+    top = masks.get(mask_key(cfg, st)) or masks[zone_of(cfg, arriba)]
+    # La generación copia el color de la ropa ORIGINAL que queda a la vista (los bordes del jean que la máscara no
+    # cubría volvían azul cualquier pantalón; la polera original, azul marino). Por eso la pasada 1 tapa todo el look
+    # y además ensancha la zona de abajo; la parte de arriba que inventa se reemplaza en la pasada 2.
+    d = int(b.get("dilatar_abajo", 0))
+    # zona de abajo = look − arriba, sin los anillos finos del borde de la prenda de arriba (al dilatarlos se repintaban
+    # los bordes de las mangas con el prompt del pantalón: puños oscuros)
+    bottom = ImageChops.subtract(full, top).filter(ImageFilter.MinFilter(5)).filter(ImageFilter.MaxFilter(5))
+    paso1 = ImageChops.lighter(full, bottom.filter(ImageFilter.MaxFilter(d)) if d > 1 else bottom)
+    keep = ctx.get("keep_mask")
+    if keep is not None:  # rostro y cabello: nunca
+        paso1 = ImageChops.subtract(paso1, keep.convert("L"))
+    # pasada 2: algo más que la prenda de arriba (sin bordes oscuros de la pasada 1), dentro de lo ya regenerado
+    paso2 = ImageChops.darker(top.filter(ImageFilter.MaxFilter(5)), paso1)
+    kw = {"control": ctx["control"]} if ctx.get("control") is not None else {}
+    r1, bad1 = engine.gen_b(img, paso1, sb, **kw)
+    r2, bad2 = engine.gen_b(r1, paso2, st, **kw)
+    return r2, bool(bad1 or bad2)
+
+
 def make_spec(cfg, approach, look, vid, seed):
     return {"id": vid, "approach": approach, "look": look["name"], "items": look["items"], "look_text": look["text"],
             "accessories": look.get("accessories", []),
@@ -250,6 +304,8 @@ def _render(engine, d, img, specs, ctx, round_no):
                 # borrosos y un halo en las mangas. Solo se garantiza la identidad: rostro y núcleo del cabello originales.
                 r = Image.composite(img, r, ctx["keep_mask"].filter(ImageFilter.GaussianBlur(2)))
                 bad = False
+            elif sp["approach"] == "B" and dos_pasadas(cfg, sp):
+                r, bad = _gen_b_dos(engine, img, sp, ctx, *dos_pasadas(cfg, sp))
             elif sp["approach"] == "B":
                 r, bad = (engine.gen_b(img, mask, sp, control=ctx["control"]) if ctx.get("control") is not None
                           else engine.gen_b(img, mask, sp))
@@ -310,7 +366,7 @@ def _render(engine, d, img, specs, ctx, round_no):
         total += dt
         m = {"nsfw": nsfw, "face_ssim": fs, "identity_ok": None if fs is None else fs >= thr,
              "attempts": attempts, "time_s": round(dt, 2), "candidates_clip": candidate_scores,
-             "nsfw_alertas": flagged, "accesorios_aplicados": acc_done,
+             "nsfw_alertas": flagged, "accesorios_aplicados": acc_done, "pasadas": 2 if dos_pasadas(cfg, spec) else 1,
              "api_tokens": sum(int(u.get("total_tokens", 0)) for u in usages) if usages else None,
              "api_error": api_errors[0] if api_errors else None,
              "accesorios_omitidos": [i for i in spec.get("accessories", []) if i not in acc_done]}

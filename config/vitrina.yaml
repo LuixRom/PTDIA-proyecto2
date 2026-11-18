@@ -56,6 +56,14 @@ approaches:
     steps: 20                # Euler da buena calidad con 20 (30 tardaba 1,5x más)
     work_size: 640           # la zona de la ropa se regenera ampliada a 640 px (lado mayor) y se pega de vuelta
     candidates: 2            # candidatos por look; se elige el más parecido a la descripción según CLIP
+    # Looks de arriba + abajo: primero el pantalón y luego la prenda de arriba, cada uno con su prompt. En una pasada
+    # SD 1.5 mezclaba los colores y copiaba el color de la ropa original visible (todo salía azul). La pasada 1 tapa todo
+    # el look (más dilatar_abajo) con el prompt de abajo; la 2 rehace la parte de arriba. Medido (4 looks x 4 semillas):
+    # pantalón negro 0/4 -> 4/4. Cuesta el doble de tiempo en esos looks. negativo_abajo: si abajo no es azul ni celeste.
+    dos_pasadas: true
+    negativo_abajo: "blue, denim, jeans"
+    negativo_abajo_jean: "blue"   # jean que no es azul (pitillo negro): sigue siendo denim
+    dilatar_abajo: 9         # px: la máscara de la ropa no cubre del todo el pantalón original y sus bordes se copiaban
     controlnet:              # ControlNet canny con los bordes de brazos y manos de la foto original: misma pose
       enabled: true
       repo: lllyasviel/control_v11p_sd15_openpose
