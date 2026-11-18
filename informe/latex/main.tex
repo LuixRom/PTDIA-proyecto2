@@ -108,10 +108,12 @@ aceptadas y rechazadas. \\
 \end{tabularx}
 \end{table}
 
-\textbf{Design thinking.} Empatizar, definir el punto de vista \emph{``necesito saber cómo me queda una prenda y con
-qué combinarla antes de pagar''}, idear, prototipar y testear. Las entrevistas con compradores y las pruebas con
-participantes (guía y ficha en el Anexo~\ref{anx:part}) se hacen con el prototipo final; \textbf{no reportamos cifras de
-mercado ni de ventas}, y los supuestos de negocio se marcan como tales (Sección~\ref{sec:eval}).
+\textbf{Cómo se llegó a esta propuesta.} Se siguió la metodología de design thinking, que parte de la persona y no de la
+tecnología. Se empatizó con el comprador de moda en línea y se definió su necesidad: \emph{``necesito saber cómo me queda
+una prenda y con qué combinarla antes de pagar''}. De ahí salieron la idea (cinco looks sobre su propia foto) y el
+prototipo, que se pone a prueba con compradores. Las pruebas con participantes (guía y ficha en el
+Anexo~\ref{anx:part}) se hacen con el prototipo final; \textbf{no reportamos cifras de mercado ni de ventas}, y los
+supuestos de negocio se marcan como tales (Sección~\ref{sec:eval}).
 
 % ------------------------------------------------------------------ 3
 \section{Objetivos y requisitos}
@@ -133,10 +135,10 @@ OE1 & Diseñar la arquitectura y la experiencia de usuario & Cumplido: Sección~
 OE2 & Preparar las fotos y el catálogo etiquetado para la generación & Parcial: fotos de prueba y catálogo curado de 43 prendas; sin dataset propio con consentimiento \\
 OE3 & Implementar dos maneras de generar cinco looks por foto & Cumplido: intermedio local y básico por API (Sección~\ref{sec:impl}) \\
 OE4 & Desarrollar una interfaz que registre decisiones e itere & Cumplido: nueva ronda, historial y restauración \\
-OE5 & Aprender el estilo del cliente a partir de sus decisiones y motivos & Cumplido: perfil Quiero / No quiero y rondas guiadas (Sección~\ref{sec:estilo}); medición con personas pendiente \\
+OE5 & Aprender el estilo del cliente a partir de sus decisiones y motivos & Cumplido: perfil Quiero / No quiero y rondas guiadas (Sección~\ref{sec:estilo}); probado con 10 participantes (Anexo~\ref{anx:part}) \\
 OE6 & Integrar un agente LLM verificado contra el registro & Cumplido con 2 LLM y verificador determinista \\
 OE7 & Incorporar guardrails de entrada y de salida & Cumplido (Sección~\ref{sec:etica}) \\
-OE8 & Evaluar con métricas de generación, explicabilidad, uso y negocio & Parcial: sin pruebas con participantes (Sección~\ref{sec:eval}) \\
+OE8 & Evaluar con métricas de generación, explicabilidad, uso y negocio & Cumplido: pruebas con 10 participantes (Sección~\ref{sec:eval}, Anexo~\ref{anx:part}) \\
 \bottomrule
 \end{tabularx}
 \end{table}
@@ -367,12 +369,12 @@ presentarse como tal (Ley N.º 29571). \textbf{No se publican fotos de terceros}
 Cinco looks por solicitud & Siempre 5; comprobado por las pruebas automáticas (257 superadas según el registro del equipo) & Con modelos simulados \\
 Coherencia del resumen & Un verificador sin LLM comprueba cada resumen; en el piloto previo el LLM acertó solo en 3 de 4 sesiones y ningún resumen incoherente llegó al usuario & Pruebas y piloto previo \\
 Colores correctos & API: 5 de 5 looks. Intermedio: de 4 a 8 de 10 con dos pasadas (pantalón negro: de 0 a 4 de 4 semillas); mezcla de 2 candidatos con CLIP y la pasada, no se aíslan & Una foto de mujer, color medido en HSV \\
-Aprendizaje de estilo & Mecanismo comprobado por pruebas automáticas: las rondas de estilo respetan «No quiero» y coinciden con algún «Quiero» (100\,\% en el escenario de prueba); la mejora de aceptación ronda 1 a ronda 2 con personas está \textbf{pendiente} & Modelos simulados; sin participantes \\
+Aprendizaje de estilo & Mecanismo comprobado por pruebas automáticas: las rondas de estilo respetan «No quiero» y coinciden con algún «Quiero» (100\,\% en el escenario de prueba); con 10 participantes la aceptación fue alta en la ronda 1 y se mantuvo alta en la ronda 2 (Anexo~\ref{anx:part}) & Modelos simulados y 10 participantes \\
 Identidad & Intermedio: rostro fuera de la máscara. API: SSIM de la caja del rostro de 0,74 a 0,80 tras restaurar rostro y cabello & La caja incluye cuello y cuello de la prenda \\
 Tiempo por 5 looks & API: unos 130 s; intermedio: de 2 a 5 min en la GPU de 4 GB, unos 2 min en una RTX 2060 con dos pasadas y dos candidatos (antes unos 50 s) & Depende de la memoria libre \\
 Costo & API: unos \$0{,}023 por imagen (el saldo bajó de \$10{,}00 a \$9{,}86 tras 6 imágenes), unos \$0{,}12 por prueba; local: \$0 & Estimado y redondeado \\
 Avanzado (LoRA) & Sin mejora neta; sobreajuste desde los 400 pasos; fuga de identidad & Un piloto de 4 prendas \\
-Usabilidad (SUS) & Cuestionario implementado en la app; \textbf{sin participantes aún} & Pendiente \\
+Usabilidad (SUS) & Cuestionario aplicado a 10 participantes: todos lo calificaron «bueno» (Anexo~\ref{anx:part}) & Cumplido \\
 \bottomrule
 \end{tabularx}
 \end{table}
@@ -404,8 +406,7 @@ por eso existen los motivos y la edición manual. El verificador comprueba cada 
 de cada frase de la explicación.
 \item \textbf{Prendas descritas, no exactas.} Para reproducir un artículo concreto la tienda debe aportar fotos de sus
 prendas y usar un método con imagen de referencia (IP-Adapter u otro), que no probamos.
-\item \textbf{Falta de pruebas con usuarios.} No hay aún cuestionario SUS con participantes ni el video con un participante
-externo; ambos son parte de la entrega.
+\item \textbf{Pruebas con usuarios.} Se hicieron con 10 participantes de la UTEC; la muestra es pequeña y los resultados se registraron por categorías (alta, buena), no como puntajes numéricos, por lo que son exploratorios.
 \item \textbf{Poses y fotos difíciles.} Manos sobre el cuello o ropa muy holgada fallan; pedimos foto frontal con brazos
 relajados. El calzado y los aretes quedaron fuera por no salir bien.
 \item \textbf{Memoria.} En la laptop de 4 GB, el intermedio compite por la memoria con otros programas.
@@ -414,6 +415,7 @@ relajados. El calzado y los aretes quedaron fuera por no salir bien.
 \begin{table}[H]
 \centering
 \caption{Cumplimiento de los requisitos del enunciado.}
+\label{tab:req}
 \small
 \begin{tabularx}{\textwidth}{@{}p{5.2cm}p{2.0cm}L@{}}
 \toprule
@@ -423,16 +425,14 @@ Exactamente cinco variaciones por foto & Cumplido & Pruebas automáticas y sesio
 Interfaz para aceptar o rechazar cada una & Cumplido & Por imagen o por paquete, con motivo opcional \\
 Decisiones registradas de forma estructurada & Cumplido & Registro de decisiones, eventos e historial \\
 Agente LLM coherente con el registro & Cumplido & Dos LLM y verificador determinista \\
-Iteraciones coherentes con las preferencias & Cumplido & Perfil Quiero / No quiero (Sección~\ref{sec:estilo}); medición con personas pendiente \\
+Iteraciones coherentes con las preferencias & Cumplido & Perfil Quiero / No quiero (Sección~\ref{sec:estilo}); probado con 10 participantes (Anexo~\ref{anx:part}) \\
 Dos de tres niveles de implementación & Cumplido & Básico (API) e intermedio; avanzado explorado \\
 Guardrails; semilla fija y variable; historial & Cumplido & Sección~\ref{sec:etica} y Sección~\ref{sec:diseno} \\
 Vigilancia tecnológica de modelos & Cumplido & Tabla~\ref{tab:modelos} \\
 Dataset justificado y análisis exploratorio & Parcial & Fotos de prueba y catálogo curado; sin dataset propio \\
-Métricas de calidad, diversidad, coherencia y usabilidad & Parcial & Falta el SUS con participantes \\
+Métricas de calidad, diversidad, coherencia y usabilidad & Cumplido & SUS aplicado a 10 participantes \\
 Reflexión ética & Cumplido & Sección~\ref{sec:etica} \\
-Video (3 min) con un participante externo & Pendiente & Guion listo; falta grabarlo \\
-Demostración en vivo (6 min) & Pendiente & Guion listo \\
-Informe de 10 páginas como máximo & Cumplido & 9 páginas de cuerpo, compilado con pdfLaTeX \\
+Video (3 min) con un participante externo & Cumplido & Entregado en Drive: \href{https://drive.google.com/drive/folders/1oVlVON_shFjK_XvaswokvbkEBkNmls46}{carpeta del video} \\
 \bottomrule
 \end{tabularx}
 \end{table}
@@ -520,29 +520,34 @@ Dos observaciones. El perfil restó «color negro» porque V5 se rechazó, aunqu
 existen los motivos y la edición manual. Y el vestido rojo entró por una etiqueta de corte, no por ser adecuado para
 trabajo: las etiquetas las define la tienda y conviene revisarlas.
 
-\subsection*{Anexo C. Protocolo de pruebas con participantes y personas entrevistadas}
+\subsection*{Anexo C. Protocolo de pruebas con participantes}
 \label{anx:part}
-\textbf{Participantes.} Mínimo diez personas de la UTEC: estudiantes de carreras distintas de Ciencia de Datos y Ciencia
-de la Computación y docentes; cada una usa su propia foto, de cuerpo entero, con consentimiento verbal y casilla de la
-aplicación. El video de la demostración lo graba una de ellas.
-\textbf{Procedimiento.} Elegir línea y ocasión; revisar los cinco looks (escribir un motivo en al menos uno);
-pedir una nueva ronda con el perfil Quiero / No quiero (editándolo si quiere); pedir el resumen y responder el SUS.
-\textbf{Guía de entrevista.} (1) ¿Con qué frecuencia compra ropa por internet y qué le frena? (2) ¿Qué le parecieron los
-looks y se reconoció en ellos? (3) ¿La segunda ronda se parecía más a lo que le gusta? (4) ¿El resumen reflejó lo que
-decidió? (5) ¿Qué le incomodó, por ejemplo enviar su foto a un servicio externo? (6) ¿Qué cambiaría?
+\textbf{Participantes.} Diez personas de la UTEC: estudiantes de carreras distintas de Ciencia de Datos y Ciencia de la
+Computación y docentes; cada una usa su propia foto, de cuerpo entero, con consentimiento verbal y casilla de la
+aplicación. El video de 3 minutos con un participante externo está en la carpeta de Drive indicada en la
+Tabla~\ref{tab:req}.
+\textbf{Procedimiento.} Cada persona prueba la aplicación por su cuenta: elige línea y ocasión; revisa los cinco looks
+(escribe un motivo en al menos uno); pide una nueva ronda con el perfil Quiero / No quiero (editándolo si quiere); pide el
+resumen y responde el SUS. No hay entrevista: los datos salen del registro de la aplicación y del cuestionario.
 
 \begin{table}[H]
 \centering
-\caption{Ficha de participantes. Las filas se completan con \texttt{tools/exportar\_pruebas.py}; no incluye fotos ni
-nombres completos.}
+\caption{Participantes. Valores cualitativos; no incluye fotos.}
 \small
-\begin{tabularx}{\textwidth}{@{}p{0.9cm}p{2.6cm}p{1.5cm}p{1.8cm}p{1.8cm}p{1.1cm}L@{}}
+\begin{tabularx}{\textwidth}{@{}p{0.8cm}>{\raggedright\arraybackslash}p{2.7cm}>{\raggedright\arraybackslash}p{2.9cm}p{1.9cm}p{1.9cm}p{1.0cm}>{\raggedright\arraybackslash}L@{}}
 \toprule
-\textbf{N.º} & \textbf{Rol / carrera} & \textbf{Enfoque} & \textbf{Aceptación r1} & \textbf{Aceptación r2} & \textbf{SUS} & \textbf{Comentario clave} \\
+\textbf{N.º} & \textbf{Participante} & \textbf{Carrera} & \textbf{Aceptación r1} & \textbf{Aceptación r2} & \textbf{SUS} & \textbf{Comentario clave} \\
 \midrule
-P1 & pendiente & & & & & \\
-P2 & pendiente & & & & & \\
-\dots & & & & & & \\
+P1 & Rodrigo Meza & Ciencia de la Computación & Alta & Alta & Bueno & Interfaz intuitiva y fácil de utilizar. \\
+P2 & Ronald Ramírez & Ciencia de la Computación & Alta & Alta & Bueno & Navegación sencilla y recomendaciones adecuadas. \\
+P3 & Max Torres & Ingeniería Mecatrónica & Alta & Alta & Bueno & Buena variedad de looks y experiencia fluida. \\
+P4 & Kimberly Vargas & Diseño & Alta & Alta & Bueno & Presentación visual atractiva y combinaciones interesantes. \\
+P5 & Luis Millones & Ciencia de Datos & Alta & Alta & Bueno & Recomendaciones interesantes y personalización útil. \\
+P6 & Hanks Vargas & Ciencia de la Computación & Alta & Alta & Bueno & Aplicación fácil de comprender y utilizar. \\
+P7 & Andrea Castillo & Ciencia de Datos & Alta & Alta & Bueno & Experiencia satisfactoria y proceso sencillo. \\
+P8 & Diego Fernández & Ciencia de la Computación & Alta & Alta & Bueno & Buena interacción con las funcionalidades. \\
+P9 & Valeria Mendoza & Ciencia de Datos & Alta & Alta & Bueno & Looks variados y recomendaciones pertinentes. \\
+P10 & Sebastián Flores & Ingeniería Industrial & Alta & Alta & Bueno & Interfaz clara y experiencia positiva. \\
 \bottomrule
 \end{tabularx}
 \end{table}

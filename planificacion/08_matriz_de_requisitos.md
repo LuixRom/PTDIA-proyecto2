@@ -27,7 +27,7 @@ Fuente: `doc-principal/EvaluaciónProyecto2 (1) (1).pdf`. "Estado actual" se ref
 | R21 | Código organizado, documentado y reproducible, con instrucciones | §4 p4 | `run_colab.ipynb` desde cero + README; versiones fijadas | **Pendiente** (notebook con celdas rotas o duplicadas y `pip -U`) |
 | R22 | Informe técnico de **≤5 páginas** con todas las etapas | §4 p4 | Contar páginas del PDF | **Pendiente** |
 | R23 | Elementos visuales: arquitectura, flujo, ejemplos, evidencia de interacción | §4 p4 | Figuras en el informe | **Pendiente** |
-| R24 | Demo en vivo o video: 5 variaciones, aceptar/rechazar, resumen automático | §4 p5 | Video grabado | **Pendiente** |
+| R24 | Demo en vivo o video: 5 variaciones, aceptar/rechazar, resumen automático | §4 p5 | Video grabado | **Cumplido** (video en Drive: https://drive.google.com/drive/folders/1oVlVON_shFjK_XvaswokvbkEBkNmls46) |
 | R25 | Equipo de 3–5 con reparto equilibrado | §2.1 p1–2 | Sección de roles en el informe | **No verificable** desde los archivos |
 | R26 | Decisiones técnicas justificadas en el documento | §2.1 p2 | Revisión del informe frente a 03/04 | **Pendiente** |
 
