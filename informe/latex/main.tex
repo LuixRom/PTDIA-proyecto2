@@ -1,5 +1,5 @@
 % Informe Proyecto 2 (versión final). Compilar con pdfLaTeX (MiKTeX, Prism u Overleaf), dos pasadas: main.tex + carpeta figs/.
-% Compilado: 9 páginas (el límite es 10). Si se agrega contenido, reducir el ancho de las figuras o quitar el lienzo (Sección 2).
+% Compilado: portada + 9 páginas de cuerpo (límite 10) + 1 de referencias + 2 de anexos. Si se agrega contenido, reducir figuras o quitar el lienzo (Sección 2).
 \documentclass[11pt,letterpaper]{article}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
@@ -67,13 +67,19 @@ un modelo con otro cuerpo, otro tono de piel y otra pose, y debe imaginar cómo 
 compra y termina en devoluciones. ¿Cómo puede una tienda mostrar a cada cliente \textbf{cómo se vería él mismo} con
 distintas prendas, a partir de una sola fotografía, sin alterar su identidad y dejando la decisión en sus manos?
 Lo planteamos como \textbf{toma de decisiones asistida}: la IA propone exactamente cinco looks sobre la foto del
-cliente; él acepta o rechaza cada uno; el sistema registra las decisiones y vuelve a generar solo los rechazados; y un
+cliente; él acepta o rechaza cada uno; el sistema registra las decisiones y vuelve a generar solo los rechazados, eligiendo looks afines a su estilo; y un
 agente basado en un modelo de lenguaje (LLM) resume qué se aceptó y qué se rechazó, sin contradecir el registro.
 
 \textbf{Caso de uso.} Ana tiene una reunión de trabajo. En la web de la tienda sube una foto suya de cuerpo entero,
 elige la línea \emph{Mujer}, la ocasión \emph{Reunión} y cómo generar. Recibe cinco looks (por ejemplo, traje sastre
-beige, blusa blanca con pantalón gris, camisa celeste con jean), rechaza dos y pide una nueva ronda solo para esos.
+beige, blusa blanca con pantalón gris, camisa celeste con jean), rechaza dos, deduce su estilo y pide una nueva ronda solo para esos.
 Al final guarda los looks aceptados y recibe un resumen de sus preferencias.
+
+\textbf{Por qué IA y con qué límites.} Una foto de catálogo no muestra al cliente; un modelo generativo que edita su
+propia foto sí. Pero ese modelo puede cambiar el rostro, inventar estampados o dibujar una prenda inexacta, y editar
+fotos de personas abre riesgos de uso indebido (Sección~\ref{sec:etica}). Por eso el sistema solo regenera la ropa, deja
+la decisión al cliente y \textbf{personaliza} las rondas siguientes con lo que él acepta y rechaza (y sus motivos): un
+perfil de estilo \emph{Quiero / No quiero} que él puede corregir (Sección~\ref{sec:estilo}).
 
 % ------------------------------------------------------------------ 2
 \section{Propuesta de valor del producto}
@@ -104,8 +110,8 @@ aceptadas y rechazadas. \\
 
 \textbf{Design thinking.} Empatizar, definir el punto de vista \emph{``necesito saber cómo me queda una prenda y con
 qué combinarla antes de pagar''}, idear, prototipar y testear. Las entrevistas con compradores y las pruebas con
-participantes \textbf{aún no se realizaron}; no reportamos cifras de mercado ni de ventas, y los supuestos de negocio
-se marcan como tales (Sección~\ref{sec:eval}).
+participantes (guía y ficha en el Anexo~\ref{anx:part}) se hacen con el prototipo final; \textbf{no reportamos cifras de
+mercado ni de ventas}, y los supuestos de negocio se marcan como tales (Sección~\ref{sec:eval}).
 
 % ------------------------------------------------------------------ 3
 \section{Objetivos y requisitos}
@@ -124,12 +130,13 @@ el estado de cada objetivo específico.
 \textbf{OE} & \textbf{Objetivo} & \textbf{Estado y evidencia} \\
 \midrule
 OE1 & Diseñar la arquitectura y la experiencia de usuario & Cumplido: Sección~\ref{sec:diseno} y interfaz propia \\
-OE2 & Preparar las fotos y el catálogo para la generación & Parcial: fotos de prueba y catálogo curado; sin dataset propio con consentimiento \\
+OE2 & Preparar las fotos y el catálogo etiquetado para la generación & Parcial: fotos de prueba y catálogo curado de 43 prendas; sin dataset propio con consentimiento \\
 OE3 & Implementar dos maneras de generar cinco looks por foto & Cumplido: intermedio local y básico por API (Sección~\ref{sec:impl}) \\
 OE4 & Desarrollar una interfaz que registre decisiones e itere & Cumplido: nueva ronda, historial y restauración \\
-OE5 & Integrar un agente LLM verificado contra el registro & Cumplido con 2 LLM y verificador determinista \\
-OE6 & Incorporar guardrails de entrada y de salida & Cumplido (Sección~\ref{sec:etica}) \\
-OE7 & Evaluar con métricas de generación, explicabilidad, uso y negocio & Parcial: sin pruebas con participantes (Sección~\ref{sec:eval}) \\
+OE5 & Aprender el estilo del cliente a partir de sus decisiones y motivos & Cumplido: perfil Quiero / No quiero y rondas guiadas (Sección~\ref{sec:estilo}); medición con personas pendiente \\
+OE6 & Integrar un agente LLM verificado contra el registro & Cumplido con 2 LLM y verificador determinista \\
+OE7 & Incorporar guardrails de entrada y de salida & Cumplido (Sección~\ref{sec:etica}) \\
+OE8 & Evaluar con métricas de generación, explicabilidad, uso y negocio & Parcial: sin pruebas con participantes (Sección~\ref{sec:eval}) \\
 \bottomrule
 \end{tabularx}
 \end{table}
@@ -146,10 +153,11 @@ RF1 & Cargar y validar una foto del cliente. & R1 & Equipo local: GPU de 4 GB y 
 RF2 & Elegir la manera de generar y una ocasión, prendas o una instrucción. & R2 & Gratuito por defecto: la API es opcional, de pago y con consentimiento. \\
 RF3 & Generar exactamente cinco looks (V1--V5). & R3 & Solo modelos con licencia compatible con el uso. \\
 RF4 & Aceptar o rechazar cada look, o el paquete. & R4 & Solo fotos con consentimiento; no se publican fotos de terceros. \\
-RF5 & Regenerar solo los rechazados. & R5 & Plazo del curso y equipo de cinco personas. \\
+RF5 & Regenerar solo los rechazados, con looks afines a su estilo. & R5 & Plazo del curso y equipo de cinco personas. \\
 RF6 & Guardar historial y restaurar una ronda. & R6 & Video $\le$ 3 min y demo en vivo $\le$ 6 min. \\
 RF7 & Resumir con uno de dos LLM y verificar. & R7 & Informe de 10 páginas como máximo. \\
-RF8 & Guardar los looks aceptados y ver métricas. & & \\
+RF8 & Guardar los looks aceptados y ver métricas. & R8 & Las preferencias usan un vocabulario fijo de etiquetas (color, corte, estilo). \\
+RF9 & Deducir el perfil Quiero / No quiero y dejar que el cliente lo edite. & & \\
 \bottomrule
 \end{tabularx}
 \end{table}
@@ -177,7 +185,7 @@ ViTPose base & Usado & Ubica muñecas y manos; Apache-2.0 \\
 CLIP ViT-B/32 & Usado & Elige entre candidatos y mide $\Delta$CLIP; MIT (código) \\
 gpt-image-2 (OpenAI, API) & Usado & Básico por API; de pago, términos del servicio \\
 SD 1.5 + LoRA propio & Entrenado, no adoptado & Experimento del nivel avanzado (Sección~\ref{sec:lora}) \\
-Qwen2.5-1.5B, Phi-3.5-mini & Usados & Los dos LLM que explican; Apache-2.0 y MIT \\
+Qwen2.5-1.5B, Phi-3.5-mini & Usados & Los dos LLM: explican y leen los motivos del estilo; Apache-2.0 y MIT \\
 IP-Adapter, IDM-VTON & No probados & Prenda exacta a partir de su foto; trabajo futuro \\
 \bottomrule
 \end{tabularx}
@@ -220,7 +228,11 @@ manga larga, también los brazos; \textbf{las manos se protegen} (círculo más 
 cabello solo se protege el núcleo para que la tela pase bajo el borde. La zona se amplía a 640 px, se regenera con SD 1.5
 Inpainting y ControlNet de pose (20 pasos, Euler) y se pega de vuelta; se generan dos candidatos por look y CLIP elige el
 más cercano al texto, penalizando los estampados que el modelo inventa. Cada descripción lleva un solo color por
-prenda. Después se limpia el fondo junto a la silueta. Los \textbf{accesorios} (lentes y collar) se pintan en una segunda
+prenda. En los looks de \textbf{arriba más abajo se genera en dos pasadas}: encontramos (cuatro semillas, color medido en
+HSV) que el color salía mal porque la ropa original quedaba a la vista y el modelo continuaba su tela (un pantalón
+«negro» salía azul con un jean de fondo). La primera pasada tapa todo el look, ensancha 9 px la zona del pantalón y usa
+solo su descripción; la segunda rehace la prenda de arriba. Ternos y vestidos siguen en una pasada. Después se limpia el
+fondo junto a la silueta. Los \textbf{accesorios} (lentes y collar) se pintan en una segunda
 pasada sobre una zona pequeña ubicada con la pose; el collar solo se dibuja sobre piel visible.
 
 \subsection{Básico: API de imágenes}
@@ -230,10 +242,44 @@ devuelven el rostro y el núcleo del cabello de la foto original. Exige una casi
 las imágenes y el costo estimado, y no admite semilla fija.
 
 \subsection{Catálogo curado con modelos reales}
-El catálogo final tiene 33 prendas (8 de mujer y 25 de hombre) y 8 accesorios. Cada prenda se probó con los modelos
-reales sobre fotos de prueba; \textbf{retiramos alrededor de 25} por fallas repetidas (colores mezclados, mangas o manos
-defectuosas) y descartamos el calzado y los aretes porque salían deformados. Con pantalón en la foto no se ofrecen
-vestidos ni shorts, porque el modelo no logra dibujar las piernas.
+El catálogo final tiene 43 prendas (14 de mujer y 29 de hombre) y 8 accesorios, repartidos en cuatro ocasiones con 9 a
+11 looks por línea. Cada prenda lleva etiquetas de \textbf{color, corte} (recto, baggy, pitillo, entallado, holgado,
+regular) y \textbf{estilo} (formal, office casual, casual, elegante): 21 valores que forman el vocabulario del perfil de
+estilo. Los cinco looks iniciales de cada ocasión mezclan cortes y colores a propósito, para que la primera ronda
+explore. Las prendas se probaron con los modelos reales sobre fotos de prueba; \textbf{retiramos alrededor de 25} por
+fallas repetidas (colores mezclados, mangas o manos defectuosas) y descartamos el calzado y los aretes porque salían
+deformados. Las ocho prendas nuevas (pantalones recto, baggy y pitillo y dos prendas de arriba) se validaron solo en la
+línea mujer; la de hombre sigue pendiente. Con pantalón en la foto no se ofrecen vestidos ni shorts, porque el modelo
+no logra dibujar las piernas.
+
+\subsection{Aprendizaje del estilo del cliente}
+\label{sec:estilo}
+El sistema no reentrena ningún modelo: es \textbf{personalización por retroalimentación explícita} sobre un
+vocabulario cerrado, con el mismo principio del explicador (el programa decide qué es verdad; el LLM solo lee y redacta).
+\begin{enumerate}[leftmargin=1.6em]
+\item \textbf{Perfil determinista.} Cada etiqueta de un look suma $+1$ si el cliente lo aceptó y $-1$ si lo rechazó, en
+todas las rondas; el total positivo va a \emph{Quiero} y el negativo a \emph{No quiero}, con la evidencia de cada una
+(por ejemplo, V3 de la ronda 1).
+\item \textbf{Lectura de los motivos.} Qwen o Phi reciben el registro y extraen preferencias del texto libre.
+Ejemplo: «no me gustan los pantalones pitillo, me gustan los rectos o baggy» da \emph{No quiero corte pitillo} y
+\emph{Quiero corte recto} y \emph{corte baggy}. Lo que dice el motivo pesa más que lo deducido.
+\item \textbf{Verificación.} Una preferencia del LLM solo se acepta si la respalda la etiqueta de un look con la
+decisión que corresponde, o el texto del motivo sin contradecirlo; se rechazan valores fuera del vocabulario y looks
+inventados. Si falla, reintenta hasta dos veces con los errores y, si sigue, se muestra el perfil determinista marcado
+como tal.
+\item \textbf{Edición.} El cliente corrige las dos listas: la decisión final es suya.
+\item \textbf{Selección.} Candidatos: todos los looks de su línea, primero los de la ocasión. Se descarta cualquier look
+con algo de \emph{No quiero} y la ropa ya mostrada, y se ordena por coincidencias con \emph{Quiero}. Si no quedan
+candidatos se ajusta el mejor look con el corte o color preferido. Cada look nuevo dice por qué se eligió («porque
+prefieres corte recto»), y el perfil deducido, el editado y la elección quedan en el historial.
+\end{enumerate}
+Funciona igual con los dos enfoques de generación, porque actúa sobre qué looks se piden y no sobre cómo se dibujan.
+
+\textbf{Cuándo aprende y cuándo no.} (i) La \emph{ronda 1} no personaliza: el sistema aún no conoce al cliente y muestra
+cinco looks de la ocasión elegida, variados a propósito. (ii) Hay dos botones de nueva ronda: \emph{Nueva ronda con las
+rechazadas} cambia los rechazados por los siguientes looks de la ocasión sin mirar el perfil (comportamiento base), y
+\emph{Nueva ronda con mi estilo}, que se usa tras \emph{Deducir mi estilo}, es la que aprende. (iii) Cada sesión parte de
+cero: volver a pulsar \emph{Probarme 5 looks} crea una sesión nueva y el perfil anterior no se conserva.
 
 \subsection{Interfaz}
 La identidad visual es \textbf{la cinta métrica}: una cinta amarilla con las marcas 1 a 5 recorre la cabecera y cada look
@@ -301,7 +347,9 @@ no solo con un filtro posterior. De hecho, el filtro NSFW de SD dio \textbf{fals
 blazers) y nos hizo mostrar imágenes negras; por eso decidimos \textbf{registrarlo y no bloquear}, a costa de depender de
 la prevención. También hay \textbf{sesgos}: los modelos de difusión representan mejor ciertos cuerpos y tonos, y los
 datos sintéticos heredan los sesgos del generador (la fuga de identidad del LoRA lo ilustra). Con la API la foto sale
-del equipo, de ahí el consentimiento aparte. Por último, la foto es un dato personal (Ley N.º 29733) y la simulación debe
+del equipo, de ahí el consentimiento aparte. El perfil de estilo se guarda solo dentro de la sesión, es visible y editable
+por el cliente y se borra con ella; no se cruza entre sesiones ni entre personas, y su vocabulario fijo evita inferir
+rasgos del cuerpo. Por último, la foto es un dato personal (Ley N.º 29733) y la simulación debe
 presentarse como tal (Ley N.º 29571). \textbf{No se publican fotos de terceros} en este repositorio.
 
 % ------------------------------------------------------------------ 9
@@ -316,17 +364,26 @@ presentarse como tal (Ley N.º 29571). \textbf{No se publican fotos de terceros}
 \toprule
 \textbf{Dimensión} & \textbf{Resultado} & \textbf{Límite} \\
 \midrule
-Cinco looks por solicitud & Siempre 5; comprobado por las pruebas automáticas & Con modelos simulados \\
+Cinco looks por solicitud & Siempre 5; comprobado por las pruebas automáticas (257 superadas según el registro del equipo) & Con modelos simulados \\
 Coherencia del resumen & Un verificador sin LLM comprueba cada resumen; en el piloto previo el LLM acertó solo en 3 de 4 sesiones y ningún resumen incoherente llegó al usuario & Pruebas y piloto previo \\
-Colores correctos & API: 5 de 5 looks; intermedio: 3 de 5 (pantalón «negro» azul, blusa «blanca» negra) & Una foto, revisión visual \\
+Colores correctos & API: 5 de 5 looks. Intermedio: de 4 a 8 de 10 con dos pasadas (pantalón negro: de 0 a 4 de 4 semillas); mezcla de 2 candidatos con CLIP y la pasada, no se aíslan & Una foto de mujer, color medido en HSV \\
+Aprendizaje de estilo & Mecanismo comprobado por pruebas automáticas: las rondas de estilo respetan «No quiero» y coinciden con algún «Quiero» (100\,\% en el escenario de prueba); la mejora de aceptación ronda 1 a ronda 2 con personas está \textbf{pendiente} & Modelos simulados; sin participantes \\
 Identidad & Intermedio: rostro fuera de la máscara. API: SSIM de la caja del rostro de 0,74 a 0,80 tras restaurar rostro y cabello & La caja incluye cuello y cuello de la prenda \\
-Tiempo por 5 looks & API: unos 130 s; intermedio: de 2 a 5 min en la GPU de 4 GB (de 40 a 60 s en versiones sin accesorios) & Depende de la memoria libre \\
+Tiempo por 5 looks & API: unos 130 s; intermedio: de 2 a 5 min en la GPU de 4 GB, unos 2 min en una RTX 2060 con dos pasadas y dos candidatos (antes unos 50 s) & Depende de la memoria libre \\
 Costo & API: unos \$0{,}023 por imagen (el saldo bajó de \$10{,}00 a \$9{,}86 tras 6 imágenes), unos \$0{,}12 por prueba; local: \$0 & Estimado y redondeado \\
 Avanzado (LoRA) & Sin mejora neta; sobreajuste desde los 400 pasos; fuga de identidad & Un piloto de 4 prendas \\
 Usabilidad (SUS) & Cuestionario implementado en la app; \textbf{sin participantes aún} & Pendiente \\
 \bottomrule
 \end{tabularx}
 \end{table}
+
+\textbf{Métricas de seguimiento} (pestaña «Métricas de la sesión» y \texttt{tools/exportar\_pruebas.py}, que genera el
+Excel con las cifras para este informe). \emph{Calidad:} $\Delta$CLIP de la prenda pedida y similitud del rostro (SSIM).
+\emph{Diversidad:} distancia CLIP entre los cinco looks. \emph{Coherencia:} resumen frente al registro y reintentos.
+\emph{Iteración y estilo:} aceptación por ronda (aceptados entre decididos de los looks generados en esa ronda), \% de
+looks de rondas con estilo que respetan «No quiero», \% que coinciden con algún «Quiero» y \% de regenerados que el
+cliente había rechazado. \emph{Uso:} tiempo por decisión y SUS. La cifra principal de «aprendió mi estilo» será la
+aceptación de la ronda 1 frente a la ronda 2 con $n\approx10$ participantes, reportada como exploratoria.
 
 \textbf{Viabilidad y negocio.} El costo variable de la API es de centavos por prueba, y el del enfoque local es cero pero
 más lento y limitado por la memoria. El modelo B2B2C propuesto (la tienda paga por pruebas) y su precio, el efecto sobre
@@ -337,8 +394,14 @@ ventas o devoluciones y la disposición a pagar son \textbf{supuestos a validar}
 \label{sec:fin}
 
 \begin{itemize}
-\item \textbf{Colores mezclados en el intermedio.} Con dos prendas de distinto color en una frase, SD 1.5 las mezcla o las
-intercambia. La solución pensada es pintar arriba y abajo en dos pasadas con una prenda cada una; no está aplicada.
+\item \textbf{Colores en el intermedio.} Las dos pasadas bajaron los errores, pero las prendas negras de arriba salen gris
+oscuro, a veces aparecen texturas en las mangas y una blusa blanca salió gris copiando el pantalón. Un pantalón baggy
+sigue saliendo recto, porque la máscara no sale del contorno del pantalón original; con la API sí se ve el corte, por lo
+que conviene usarla en la demostración.
+\item \textbf{Estilo con vocabulario fijo.} Lo que el cliente diga fuera de las etiquetas («brillos», «pastel») no se usa
+para elegir. El perfil también resta lo que no motivó el rechazo (si rechazó por el pantalón, la blusa también resta):
+por eso existen los motivos y la edición manual. El verificador comprueba cada preferencia estructurada, no la polaridad
+de cada frase de la explicación.
 \item \textbf{Prendas descritas, no exactas.} Para reproducir un artículo concreto la tienda debe aportar fotos de sus
 prendas y usar un método con imagen de referencia (IP-Adapter u otro), que no probamos.
 \item \textbf{Falta de pruebas con usuarios.} No hay aún cuestionario SUS con participantes ni el video con un participante
@@ -360,6 +423,7 @@ Exactamente cinco variaciones por foto & Cumplido & Pruebas automáticas y sesio
 Interfaz para aceptar o rechazar cada una & Cumplido & Por imagen o por paquete, con motivo opcional \\
 Decisiones registradas de forma estructurada & Cumplido & Registro de decisiones, eventos e historial \\
 Agente LLM coherente con el registro & Cumplido & Dos LLM y verificador determinista \\
+Iteraciones coherentes con las preferencias & Cumplido & Perfil Quiero / No quiero (Sección~\ref{sec:estilo}); medición con personas pendiente \\
 Dos de tres niveles de implementación & Cumplido & Básico (API) e intermedio; avanzado explorado \\
 Guardrails; semilla fija y variable; historial & Cumplido & Sección~\ref{sec:etica} y Sección~\ref{sec:diseno} \\
 Vigilancia tecnológica de modelos & Cumplido & Tabla~\ref{tab:modelos} \\
@@ -368,12 +432,13 @@ Métricas de calidad, diversidad, coherencia y usabilidad & Parcial & Falta el S
 Reflexión ética & Cumplido & Sección~\ref{sec:etica} \\
 Video (3 min) con un participante externo & Pendiente & Guion listo; falta grabarlo \\
 Demostración en vivo (6 min) & Pendiente & Guion listo \\
-Informe de 10 páginas como máximo & Cumplido & 9 páginas, compilado con pdfLaTeX \\
+Informe de 10 páginas como máximo & Cumplido & 9 páginas de cuerpo, compilado con pdfLaTeX \\
 \bottomrule
 \end{tabularx}
 \end{table}
 
 % ------------------------------------------------------------------ referencias
+\clearpage
 \section*{Referencias}
 \footnotesize
 \begin{enumerate}[label={[\arabic*]},leftmargin=2.2em,itemsep=0pt]
@@ -393,5 +458,93 @@ Informe de 10 páginas como máximo & Cumplido & 9 páginas, compilado con pdfLa
 \item Congreso de la República del Perú, Ley N.º 29733, Ley de Protección de Datos Personales, 2011.
 \item Congreso de la República del Perú, Ley N.º 29571, Código de Protección y Defensa del Consumidor, 2010.
 \end{enumerate}
+\normalsize
+
+% ------------------------------------------------------------------ anexos
+\clearpage
+\section*{Anexos}
+
+\subsection*{Anexo A. Ejemplos de looks generados}
+\label{anx:ejemplos}
+La Figura~\ref{fig:ejemplos} muestra una foto de prueba y los cinco looks de la ocasión \emph{Trabajo}
+generados con el enfoque básico (API, \texttt{gpt-image-2}); todos llevan la etiqueta «Simulación IA». Se aprecian la
+diversidad de prendas y colores, el rostro, las manos y los zapatos conservados y los colores pedidos en cada prenda. La Tabla~\ref{tab:looks} resume la variedad que ofrece el catálogo.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{figs/anexo_looks_api.jpg}
+\caption{Original y V1 a V5 (Trabajo, mujer, API). Los cinco looks son blusa blanca con pantalón gris, traje sastre
+beige, camisa celeste con pantalón negro, blusa blanca con pantalón negro y camisa celeste con jean.}
+\label{fig:ejemplos}
+\end{figure}
+
+\begin{table}[H]
+\centering
+\caption{Looks disponibles por ocasión y línea (el cliente ve cinco por ronda y se sustituyen los rechazados).}
+\label{tab:looks}
+\small
+\begin{tabularx}{\textwidth}{@{}lccL@{}}
+\toprule
+\textbf{Ocasión} & \textbf{Mujer} & \textbf{Hombre} & \textbf{Ejemplos} \\
+\midrule
+Trabajo (office casual) & 10 & 10 & blusa blanca con pantalón gris; terno azul marino; suéter azul con chino beige \\
+Reunión & 9 & 10 & traje sastre beige; blazer gris con pantalón gris; terno gris \\
+Evento & 10 & 9 & vestido rojo de satén; esmoquin negro; blazer burdeos \\
+Casual & 9 & 11 & vestido floral; casaca de cuero con jean oscuro; camisa de lino con short \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection*{Anexo B. Ejemplo de aprendizaje del estilo}
+\label{anx:estilo}
+Traza del mecanismo real con los generadores de imagen simulados (las imágenes son de relleno; el perfil, el
+verificador y la selección son los del sistema). Línea mujer, ocasión Trabajo. En la ronda 1 el cliente aceptó
+V1, V2 y V4, y rechazó V3 («no me gustan los pantalones pitillo, me gustan los rectos») y V5.
+
+\begin{table}[H]
+\centering
+\caption{De las decisiones al perfil y a la ronda 2.}
+\small
+\begin{tabularx}{\textwidth}{@{}p{3.1cm}L@{}}
+\toprule
+\textbf{Paso} & \textbf{Resultado} \\
+\midrule
+Decisiones ronda 1 & V1 blusa blanca y pantalón gris (aceptada); V2 camisa celeste y pantalón ancho beige (aceptada); V3 blusa blanca y pantalón pitillo gris con lentes (rechazada); V4 traje sastre beige (aceptada); V5 camisa celeste, pantalón negro y collar de perlas (rechazada) \\
+Perfil deducido & \emph{Quiero:} color beige, corte baggy, corte entallado, estilo formal. \emph{No quiero:} color negro, corte pitillo (fuente: perfil determinista) \\
+Ronda 2 & Se regeneran V3 y V5; V1, V2 y V4 se conservan. V3: blusa blanca con pantalón ancho beige y lentes de carey («porque prefieres color beige, corte baggy»). V5: vestido largo rojo de satén («porque prefieres corte entallado») \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+Dos observaciones. El perfil restó «color negro» porque V5 se rechazó, aunque el cliente no dijo nada del negro: por eso
+existen los motivos y la edición manual. Y el vestido rojo entró por una etiqueta de corte, no por ser adecuado para
+trabajo: las etiquetas las define la tienda y conviene revisarlas.
+
+\subsection*{Anexo C. Protocolo de pruebas con participantes y personas entrevistadas}
+\label{anx:part}
+\textbf{Participantes.} Mínimo diez personas de la UTEC: estudiantes de carreras distintas de Ciencia de Datos y Ciencia
+de la Computación y docentes; cada una usa su propia foto, de cuerpo entero, con consentimiento verbal y casilla de la
+aplicación. El video de la demostración lo graba una de ellas.
+\textbf{Procedimiento.} Elegir línea y ocasión; revisar los cinco looks (escribir un motivo en al menos uno);
+pedir una nueva ronda con el perfil Quiero / No quiero (editándolo si quiere); pedir el resumen y responder el SUS.
+\textbf{Guía de entrevista.} (1) ¿Con qué frecuencia compra ropa por internet y qué le frena? (2) ¿Qué le parecieron los
+looks y se reconoció en ellos? (3) ¿La segunda ronda se parecía más a lo que le gusta? (4) ¿El resumen reflejó lo que
+decidió? (5) ¿Qué le incomodó, por ejemplo enviar su foto a un servicio externo? (6) ¿Qué cambiaría?
+
+\begin{table}[H]
+\centering
+\caption{Ficha de participantes. Las filas se completan con \texttt{tools/exportar\_pruebas.py}; no incluye fotos ni
+nombres completos.}
+\small
+\begin{tabularx}{\textwidth}{@{}p{0.9cm}p{2.6cm}p{1.5cm}p{1.8cm}p{1.8cm}p{1.1cm}L@{}}
+\toprule
+\textbf{N.º} & \textbf{Rol / carrera} & \textbf{Enfoque} & \textbf{Aceptación r1} & \textbf{Aceptación r2} & \textbf{SUS} & \textbf{Comentario clave} \\
+\midrule
+P1 & pendiente & & & & & \\
+P2 & pendiente & & & & & \\
+\dots & & & & & & \\
+\bottomrule
+\end{tabularx}
+\end{table}
 
 \end{document}

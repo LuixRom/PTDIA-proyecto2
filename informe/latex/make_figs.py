@@ -35,7 +35,7 @@ def arquitectura():
     box(X[4], R1, W, H, "5. Guardrails salida", "NSFW registrado; rostro\nconservado (similitud);\nexactamente 5: V1–V5", RED)
     box(X[4], R2, W, H, "6. Revisión (web)", "aceptar o rechazar por\nimagen o por paquete,\nmotivo; restaurar una\nconfiguración anterior", ORANGE)
     box(X[3], R2, W, H, "7. Registro", "decisiones (JSON),\nhistorial de parámetros\n(modelo, semilla, prompt),\neventos con hora", GREEN)
-    box(X[2], R2, W, H, "8. Iteración", "regenera solo las\nrechazadas con otra\nsemilla y conserva\nlas aceptadas", ORANGE)
+    box(X[2], R2, W, H, "8. Iteración con estilo", "perfil Quiero / No quiero\n(editable); regenera solo\nlas rechazadas con looks\nafines; conserva las aceptadas", ORANGE)
     box(X[2], R3, W, H, "9. Agente explicador", "2 LLM locales a elegir;\nprompt CONTEXTO, TAREA,\nRESTRICCIONES, FORMATO")
     box(X[3], R3, W, H, "10. Verificador", "sin LLM: IDs y estados\niguales al registro;\nsi falla, reintento\ncon los errores", RED)
     box(X[4], R3, W, H, "11. Salida", "resumen verificado;\nlooks guardados y\nenlace a las prendas\nde la tienda", GREEN)
